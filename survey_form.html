@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reference Survey - RefCheck AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --accent: #4f46e5;
+            --accent-light: #6366f1;
+            --accent-bg: #eef2ff;
+            --success: #16a34a;
+            --success-bg: #dcfce7;
+            --danger: #dc2626;
+            --danger-bg: #fef2f2;
+            --warning: #d97706;
+            --warning-bg: #fef3c7;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg-secondary); color: var(--text-primary); min-height: 100vh; padding: 2rem 1rem; }
+        .container { max-width: 700px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 2rem; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--accent); display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .logo-icon { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1rem; }
+        .subtitle { color: var(--text-secondary); }
+        
+        .card { background: var(--bg-primary); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow); }
+        
+        .alert { padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
+        .alert-error { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(220,38,38,0.2); }
+        .alert-success { background: var(--success-bg); color: var(--success); border: 1px solid rgba(22,101,52,0.2); }
+        .alert-info { background: var(--accent-bg); color: var(--accent); border: 1px solid rgba(79,70,229,0.2); }
+        
+        .question-card { background: var(--bg-primary); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+        .question-number { font-size: 0.75rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+        .question-text { font-size: 1rem; font-weight: 500; margin-bottom: 1rem; line-height: 1.5; }
+        .question-type-badge { display: inline-block; font-size: 0.7rem; padding: 0.125rem 0.5rem; border-radius: 4px; margin-left: 0.5rem; }
+        .question-type-badge.standardized { background: var(--bg-secondary); color: var(--text-muted); }
+        .question-type-badge.ai_generated { background: var(--accent-bg); color: var(--accent); }
+        .required-star { color: var(--danger); margin-left: 0.25rem; }
+        
+        /* Rating stars */
+        .rating-container { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .rating-option { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .rating-option input { display: none; }
+        .rating-circle { width: 48px; height: 48px; border: 2px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.1rem; transition: all 0.15s; }
+        .rating-option:hover .rating-circle { border-color: var(--accent); color: var(--accent); }
+        .rating-option input:checked + .rating-circle { background: var(--accent); border-color: var(--accent); color: white; }
+        .rating-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem; text-align: center; }
+        
+        /* Multiple choice */
+        .option-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .option-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+        .option-item:hover { border-color: var(--accent); background: var(--accent-bg); }
+        .option-item input { display: none; }
+        .option-radio { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .option-radio::after { content: ''; width: 10px; height: 10px; background: var(--accent); border-radius: 50%; opacity: 0; transition: opacity 0.15s; }
+        .option-item input:checked + .option-radio { border-color: var(--accent); }
+        .option-item input:checked + .option-radio::after { opacity: 1; }
+        .option-text { font-size: 0.95rem; }
+        
+        /* Free text */
+        textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.95rem; resize: vertical; min-height: 100px; transition: all 0.15s; }
+        textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+        textarea::placeholder { color: var(--text-muted); }
+        
+        .btn { display: inline-block; padding: 0.875rem 1.5rem; border-radius: 8px; font-family: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; text-decoration: none; }
+        .btn-primary { background: var(--accent); color: white; width: 100%; }
+        .btn-primary:hover { background: var(--accent-light); }
+        .btn-primary:disabled { background: var(--text-muted); cursor: not-allowed; }
+        
+        .footer { text-align: center; margin-top: 2rem; color: var(--text-muted); font-size: 0.85rem; }
+        
+        .success-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .success-message { text-align: center; padding: 2rem; }
+        .success-message h2 { color: var(--success); margin-bottom: 0.5rem; }
+        .success-message p { color: var(--text-secondary); }
+        
+        .progress-bar { height: 4px; background: var(--bg-secondary); border-radius: 2px; margin-bottom: 2rem; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent); transition: width 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">✓</div>
+                RefCheck AI
+            </div>
+            <p class="subtitle">Reference Survey</p>
+        </div>
+        
+        {% if error %}
+        <div class="alert alert-error">
+            {{ error }}
+        </div>
+        {% elif success %}
+        <div class="card">
+            <div class="success-message">
+                <div class="success-icon">✅</div>
+                <h2>Thank You!</h2>
+                <p>Your survey has been submitted successfully. We appreciate your time and feedback.</p>
+                <p style="margin-top: 1rem; color: var(--text-muted);">You can close this page now.</p>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            Hi {{ reference.name.split()[0] }}, thank you for providing a reference for <strong>{{ candidate.name }}</strong>. Please answer the following questions.
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        
+        <form method="POST" id="survey-form">
+            {% for question in questions %}
+            <div class="question-card" data-question-id="{{ question.id }}">
+                <div class="question-number">
+                    Question {{ loop.index }} of {{ questions|length }}
+                    {% if question.question_type == 'ai_generated' %}
+                    <span class="question-type-badge ai_generated">Role-Specific</span>
+                    {% endif %}
+                </div>
+                <div class="question-text">
+                    {{ question.question_text }}
+                    {% if question.required %}<span class="required-star">*</span>{% endif %}
+                </div>
+                
+                {% if question.response_type == 'rating' %}
+                <div class="rating-container">
+                    {% for i in range(1, 6) %}
+                    <label class="rating-option">
+                        <input type="radio" name="q_{{ question.id }}_rating" value="{{ i }}" {% if question.required %}required{% endif %}>
+                        <div class="rating-circle">{{ i }}</div>
+                        <span class="rating-label">
+                            {% if i == 1 %}Poor{% elif i == 2 %}Fair{% elif i == 3 %}Good{% elif i == 4 %}Very Good{% elif i == 5 %}Excellent{% endif %}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+                
+                {% elif question.response_type == 'multiple_choice' %}
+                <div class="option-list">
+                    {% set options = question.options|from_json if question.options else [] %}
+                    {% for option in options %}
+                    <label class="option-item">
+                        <input type="radio" name="q_{{ question.id }}_option" value="{{ option }}" {% if question.required %}required{% endif %}>
+                        <span class="option-radio"></span>
+                        <span class="option-text">{{ option }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                
+                {% elif question.response_type == 'free_text' %}
+                <textarea name="q_{{ question.id }}_text" placeholder="Enter your response..." {% if question.required %}required{% endif %}></textarea>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <button type="submit" class="btn btn-primary" id="submit-btn">Submit Survey</button>
+        </form>
+        {% endif %}
+        
+        <div class="footer">
+            <p>Powered by RefCheck AI</p>
+            <p style="margin-top: 0.5rem; font-size: 0.8rem;">Your responses are confidential and used only for employment verification purposes.</p>
+        </div>
+    </div>
+    
+    <script>
+        // Add from_json filter equivalent for Jinja
+        // Progress bar
+        const form = document.getElementById('survey-form');
+        const progressFill = document.getElementById('progress-fill');
+        const questions = document.querySelectorAll('.question-card');
+        const totalQuestions = questions.length;
+        
+        function updateProgress() {
+            let answered = 0;
+            questions.forEach(q => {
+                const inputs = q.querySelectorAll('input[type="radio"]:checked, textarea');
+                inputs.forEach(input => {
+                    if (input.type === 'radio' && input.checked) answered++;
+                    if (input.tagName === 'TEXTAREA' && input.value.trim()) answered++;
+                });
+            });
+            // Rough estimate - count checked radios and filled textareas
+            const radios = document.querySelectorAll('input[type="radio"]:checked').length;
+            const texts = Array.from(document.querySelectorAll('textarea')).filter(t => t.value.trim()).length;
+            const progress = Math.round(((radios + texts) / totalQuestions) * 100);
+            progressFill.style.width = Math.min(progress, 100) + '%';
+        }
+        
+        document.querySelectorAll('input, textarea').forEach(el => {
+            el.addEventListener('change', updateProgress);
+            el.addEventListener('input', updateProgress);
+        });
+        
+        form?.addEventListener('submit', function(e) {
+            document.getElementById('submit-btn').disabled = true;
+            document.getElementById('submit-btn').textContent = 'Submitting...';
+        });
+    </script>
+</body>
+</html>

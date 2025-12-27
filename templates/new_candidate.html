@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+{% block title %}Add New Candidate - RefCheck AI{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .page-header { margin-bottom: 2rem; }
+    .page-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .page-subtitle { color: var(--text-secondary); }
+    
+    .steps { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+    .step { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 100px; font-size: 0.85rem; font-weight: 500; background: var(--bg-tertiary); color: var(--text-muted); }
+    .step.active { background: var(--accent); color: white; }
+    .step.completed { background: var(--success-bg); color: var(--success); }
+    .step-number { width: 20px; height: 20px; border-radius: 50%; background: currentColor; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; }
+    .step.active .step-number { background: rgba(255,255,255,0.3); }
+    .step.completed .step-number { background: var(--success); }
+    
+    .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .card-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+    
+    .file-upload { border: 2px dashed var(--border); border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.15s; background: var(--bg-secondary); }
+    .file-upload:hover { border-color: var(--accent); background: var(--accent-bg); }
+    .file-upload.dragover { border-color: var(--accent); background: var(--accent-bg); }
+    .file-upload-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .file-upload-text { color: var(--text-secondary); font-size: 0.9rem; }
+    .file-input { display: none; }
+    
+    .selected-file { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: var(--accent-bg); border-radius: 8px; margin-top: 1rem; }
+    .selected-file-name { flex: 1; font-weight: 500; font-size: 0.9rem; }
+    .selected-file-remove { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.25rem; line-height: 1; }
+    
+    .btn-group { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+    
+    .jobs-list { display: flex; flex-direction: column; gap: 1.5rem; }
+    .job-card { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .job-header { padding: 1rem 1.25rem; background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+    .job-company { font-weight: 600; font-size: 1rem; }
+    .job-title { color: var(--text-secondary); font-size: 0.9rem; }
+    .job-dates { font-size: 0.8rem; color: var(--text-muted); background: var(--bg-primary); padding: 0.25rem 0.5rem; border-radius: 4px; }
+    .job-body { padding: 1.25rem; }
+    .job-section { margin-bottom: 1.25rem; }
+    .job-section:last-child { margin-bottom: 0; }
+    .job-section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600; }
+    .job-item { display: flex; gap: 0.5rem; margin-bottom: 0.375rem; font-size: 0.875rem; color: var(--text-secondary); }
+    .job-item-icon { flex-shrink: 0; }
+    .job-item-icon.resp { color: var(--accent); }
+    .job-item-icon.ach { color: var(--success); }
+    
+    .reference-section { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+    .reference-section-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .reference-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem; }
+    .reference-item { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border); }
+    .reference-info { flex: 1; }
+    .reference-name { font-weight: 500; font-size: 0.9rem; }
+    .reference-phone { font-size: 0.8rem; color: var(--text-muted); }
+    .reference-remove { background: none; border: none; color: var(--danger); cursor: pointer; padding: 0.25rem; }
+    
+    .add-reference-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .add-reference-form input { padding: 0.625rem 0.875rem; font-size: 0.85rem; }
+    .add-reference-btn { grid-column: span 2; }
+    @media (max-width: 640px) { .add-reference-form { grid-template-columns: 1fr; } .add-reference-btn { grid-column: span 1; } }
+    
+    .custom-questions { margin-top: 1rem; }
+    .custom-questions textarea { min-height: 80px; font-size: 0.85rem; }
+    
+    .action-footer { position: sticky; bottom: 0; background: var(--bg-primary); border-top: 1px solid var(--border); padding: 1rem 2rem; margin: 2rem -2rem -2rem; display: flex; justify-content: space-between; align-items: center; }
+    
+    .success-card { text-align: center; padding: 3rem; }
+    .success-icon { font-size: 3rem; margin-bottom: 1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Add New Candidate</h1>
+    <p class="page-subtitle">Upload a resume and configure reference checks</p>
+</div>
+
+<div class="steps">
+    <div class="step active" id="step1-indicator"><span class="step-number">1</span> Upload Resume</div>
+    <div class="step" id="step2-indicator"><span class="step-number">2</span> Add References</div>
+    <div class="step" id="step3-indicator"><span class="step-number">3</span> Start Outreach</div>
+</div>
+
+<!-- Step 1: Upload Resume -->
+<section id="step1">
+    <div class="card">
+        <div class="card-body">
+            <div class="card-title"><span class="card-icon">📄</span> Candidate Information</div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="candidate-name">Candidate Name (optional)</label>
+                    <input type="text" id="candidate-name" placeholder="Will be extracted from resume">
+                </div>
+                <div class="form-group">
+                    <label for="position">Position Applied For *</label>
+                    <input type="text" id="position" placeholder="e.g., Senior Software Engineer" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Resume Upload *</label>
+                <div class="file-upload" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                    <div class="file-upload-icon">📁</div>
+                    <p class="file-upload-text">Drop resume here or click to browse</p>
+                    <p class="hint">PDF, DOC, DOCX, or TXT (max 16MB)</p>
+                </div>
+                <input type="file" id="file-input" class="file-input" accept=".pdf,.doc,.docx,.txt">
+                <div id="selected-file" class="selected-file hidden">
+                    <span>📄</span>
+                    <span class="selected-file-name" id="selected-file-name"></span>
+                    <button class="selected-file-remove" onclick="clearFile()">×</button>
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" id="parse-btn" onclick="parseResume()">Parse Resume →</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Step 2: Add References -->
+<section id="step2" class="hidden">
+    <div class="card mb-2">
+        <div class="card-body">
+            <div class="card-title">
+                <span class="card-icon">👤</span>
+                <span id="candidate-display-name">Candidate Name</span>
+                <span style="font-weight: 400; color: var(--text-muted); font-size: 0.9rem; margin-left: auto;" id="position-display"></span>
+            </div>
+            <p id="candidate-summary" style="color: var(--text-secondary); font-size: 0.9rem;"></p>
+        </div>
+    </div>
+    
+    <div class="card mb-2">
+        <div class="card-body">
+            <div class="card-title"><span class="card-icon">💼</span> Work History & References</div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Add at least one reference for each role. You can also add custom questions.</p>
+            <div class="jobs-list" id="jobs-list"></div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="card-title"><span class="card-icon">💬</span> SMS Follow-up Template</div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">If a reference doesn't answer, this message will be sent via SMS.</p>
+            <div class="form-group">
+                <label for="sms-template">SMS Message</label>
+                <textarea id="sms-template">{{ sms_template }}</textarea>
+                <p class="hint">Variables: {candidate_first_name}, {candidate_last_name}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="action-footer">
+        <button class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
+        <button class="btn btn-primary" id="start-outreach-btn" onclick="startOutreach()">📞 Start Reference Outreach</button>
+    </div>
+</section>
+
+<!-- Step 3: Confirmation -->
+<section id="step3" class="hidden">
+    <div class="card">
+        <div class="card-body success-card">
+            <div class="success-icon">✓</div>
+            <h2 style="margin-bottom: 0.5rem;">Outreach Started!</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Reference calls are being initiated. You'll be notified of results.</p>
+            <div class="btn-group" style="justify-content: center;">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← Back to Dashboard</a>
+                <a href="" class="btn btn-primary" id="view-candidate-btn">View Candidate Details →</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let candidateId = null;
+    let candidateData = null;
+    let selectedFile = null;
+    
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault(); dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) handleFileSelect(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) handleFileSelect(e.target.files[0]);
+    });
+    
+    function handleFileSelect(file) {
+        if (!file.name.match(/\.(pdf|txt|doc|docx)$/i)) { alert('Please upload a PDF, DOC, DOCX, or TXT file'); return; }
+        selectedFile = file;
+        document.getElementById('selected-file').classList.remove('hidden');
+        document.getElementById('selected-file-name').textContent = file.name;
+        dropZone.style.display = 'none';
+    }
+    
+    function clearFile() {
+        selectedFile = null; fileInput.value = '';
+        document.getElementById('selected-file').classList.add('hidden');
+        dropZone.style.display = 'block';
+    }
+    
+    function goToStep(step) {
+        document.getElementById('step1').classList.toggle('hidden', step !== 1);
+        document.getElementById('step2').classList.toggle('hidden', step !== 2);
+        document.getElementById('step3').classList.toggle('hidden', step !== 3);
+        document.getElementById('step1-indicator').className = `step ${step === 1 ? 'active' : step > 1 ? 'completed' : ''}`;
+        document.getElementById('step2-indicator').className = `step ${step === 2 ? 'active' : step > 2 ? 'completed' : ''}`;
+        document.getElementById('step3-indicator').className = `step ${step === 3 ? 'active' : ''}`;
+    }
+    
+    async function parseResume() {
+        const position = document.getElementById('position').value.trim();
+        const candidateName = document.getElementById('candidate-name').value.trim();
+        const smsTemplate = document.getElementById('sms-template').value;
+        
+        if (!position) { alert('Please enter the position applied for'); return; }
+        if (!selectedFile) { alert('Please upload a resume'); return; }
+        
+        const btn = document.getElementById('parse-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Parsing...';
+        
+        try {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('position', position);
+            formData.append('sms_template', smsTemplate);
+            if (candidateName) formData.append('candidate_name', candidateName);
+            
+            const response = await fetch('/api/candidates', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            
+            candidateId = data.candidate_id;
+            candidateData = data.candidate;
+            renderStep2();
+            goToStep(2);
+        } catch (error) {
+            alert('Error: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Parse Resume →';
+        }
+    }
+    
+    function renderStep2() {
+        document.getElementById('candidate-display-name').textContent = candidateData.name;
+        document.getElementById('position-display').textContent = candidateData.position;
+        document.getElementById('candidate-summary').textContent = candidateData.summary || '';
+        
+        const container = document.getElementById('jobs-list');
+        container.innerHTML = candidateData.jobs.map((job, index) => `
+            <div class="job-card" data-index="${index}">
+                <div class="job-header">
+                    <div>
+                        <div class="job-company">${escapeHtml(job.company)}</div>
+                        <div class="job-title">${escapeHtml(job.title)}</div>
+                    </div>
+                    <div class="job-dates">${escapeHtml(job.dates)}</div>
+                </div>
+                <div class="job-body">
+                    ${job.responsibilities?.length ? `<div class="job-section"><div class="job-section-title">Responsibilities</div>${job.responsibilities.map(r => `<div class="job-item"><span class="job-item-icon resp">○</span><span>${escapeHtml(r)}</span></div>`).join('')}</div>` : ''}
+                    ${job.achievements?.length ? `<div class="job-section"><div class="job-section-title">Achievements</div>${job.achievements.map(a => `<div class="job-item"><span class="job-item-icon ach">★</span><span>${escapeHtml(a)}</span></div>`).join('')}</div>` : ''}
+                    <div class="reference-section">
+                        <div class="reference-section-title"><span>👥</span> References for this role</div>
+                        <div class="reference-list" id="refs-${index}"><p style="color: var(--text-muted); font-size: 0.85rem;">No references added yet</p></div>
+                        <div class="add-reference-form">
+                            <input type="text" id="ref-name-${index}" placeholder="Reference name">
+                            <input type="tel" id="ref-phone-${index}" placeholder="+1 555 123 4567">
+                            <button class="btn btn-secondary btn-sm add-reference-btn" onclick="addReference(${index})">+ Add Reference</button>
+                        </div>
+                        <div class="custom-questions">
+                            <label for="custom-q-${index}">Custom Questions (optional)</label>
+                            <textarea id="custom-q-${index}" placeholder="Add specific questions for the AI to ask. One per line."></textarea>
+                            <p class="hint">These will be asked in addition to standard verification questions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    async function addReference(jobIndex) {
+        const name = document.getElementById(`ref-name-${jobIndex}`).value.trim();
+        const phone = document.getElementById(`ref-phone-${jobIndex}`).value.trim();
+        const customQInput = document.getElementById(`custom-q-${jobIndex}`);
+        const customQuestions = customQInput.value.trim().split('\n').filter(q => q.trim());
+        
+        if (!name || !phone) { alert('Please enter both name and phone number'); return; }
+        
+        try {
+            const response = await fetch(`/api/candidates/${candidateId}/references`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reference_name: name, reference_phone: phone, job_index: jobIndex, custom_questions: customQuestions })
+            });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            
+            if (!candidateData.references) candidateData.references = [];
+            candidateData.references.push(data.reference);
+            renderReferences(jobIndex);
+            document.getElementById(`ref-name-${jobIndex}`).value = '';
+            document.getElementById(`ref-phone-${jobIndex}`).value = '';
+        } catch (error) { alert('Error: ' + error.message); }
+    }
+    
+    function renderReferences(jobIndex) {
+        const refs = (candidateData.references || []).filter(r => {
+            const jobs = candidateData.jobs;
+            const jobId = jobs[jobIndex]?.id;
+            return r.job_id === jobId || (!r.job_id && jobIndex === 0);
+        });
+        const container = document.getElementById(`refs-${jobIndex}`);
+        
+        if (refs.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No references added yet</p>';
+            return;
+        }
+        
+        container.innerHTML = refs.map(ref => `
+            <div class="reference-item">
+                <div class="reference-info">
+                    <div class="reference-name">${escapeHtml(ref.name)}</div>
+                    <div class="reference-phone">${escapeHtml(ref.phone)}</div>
+                </div>
+                <button class="reference-remove" onclick="removeReference('${ref.id}', ${jobIndex})">×</button>
+            </div>
+        `).join('');
+    }
+    
+    async function removeReference(refId, jobIndex) {
+        try {
+            await fetch(`/api/candidates/${candidateId}/references/${refId}`, { method: 'DELETE' });
+            candidateData.references = candidateData.references.filter(r => r.id !== refId);
+            renderReferences(jobIndex);
+        } catch (error) { alert('Error: ' + error.message); }
+    }
+    
+    async function startOutreach() {
+        const refs = candidateData.references || [];
+        if (refs.length === 0) { alert('Please add at least one reference'); return; }
+        
+        const smsTemplate = document.getElementById('sms-template').value;
+        await fetch(`/api/candidates/${candidateId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sms_template: smsTemplate })
+        });
+        
+        const btn = document.getElementById('start-outreach-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Starting...';
+        
+        try {
+            const response = await fetch(`/api/candidates/${candidateId}/start-outreach`, { method: 'POST' });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            
+            document.getElementById('view-candidate-btn').href = `/candidate/${candidateId}`;
+            goToStep(3);
+        } catch (error) {
+            alert('Error: ' + error.message);
+            btn.disabled = false;
+            btn.innerHTML = '📞 Start Reference Outreach';
+        }
+    }
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

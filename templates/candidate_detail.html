@@ -1,0 +1,1359 @@
+{% extends "base.html" %}
+{% block title %}Candidate Details - RefCheck AI{% endblock %}
+
+{% block extra_styles %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .candidate-header { display: flex; gap: 1.5rem; align-items: flex-start; margin-bottom: 2rem; }
+    .candidate-avatar { width: 72px; height: 72px; border-radius: 16px; background: var(--accent-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 700; flex-shrink: 0; }
+    .candidate-info { flex: 1; }
+    .candidate-name { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .candidate-position { color: var(--text-secondary); margin-bottom: 0.5rem; }
+    .candidate-meta { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .meta-item { display: flex; align-items: center; gap: 0.375rem; font-size: 0.85rem; color: var(--text-muted); }
+    
+    .signal-badge { padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+    .signal-badge.green { background: var(--success-bg); color: var(--success); }
+    .signal-badge.yellow { background: var(--warning-bg); color: var(--warning); }
+    .signal-badge.red { background: var(--danger-bg); color: var(--danger); }
+    .signal-badge.gray { background: var(--bg-tertiary); color: var(--text-muted); }
+    .signal-score { font-size: 1.5rem; font-weight: 700; }
+    
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    .tab { padding: 0.5rem 1rem; border-radius: 6px; background: none; border: none; font-family: inherit; font-size: 0.9rem; color: var(--text-secondary); cursor: pointer; font-weight: 500; }
+    .tab:hover { background: var(--bg-tertiary); }
+    .tab.active { background: var(--accent-bg); color: var(--accent); }
+    
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    
+    /* Summary page styles */
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .summary-bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 768px) { 
+        .summary-grid, .summary-bottom-grid { grid-template-columns: 1fr; } 
+    }
+    
+    .big-score { font-size: 4rem; font-weight: 800; line-height: 1; }
+    .big-score.high { color: var(--success); }
+    .big-score.medium { color: var(--warning); }
+    .big-score.low { color: var(--danger); }
+    .score-label { font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem; }
+    .score-sublabel { font-size: 0.8rem; color: var(--text-muted); }
+    
+    .verification-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .verification-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 8px; }
+    .verification-icon { font-size: 1.25rem; }
+    .verification-label { font-size: 0.85rem; color: var(--text-secondary); }
+    .verification-status { font-size: 0.75rem; font-weight: 600; margin-top: 0.125rem; }
+    .verification-status.confirmed { color: var(--success); }
+    .verification-status.denied { color: var(--danger); }
+    .verification-status.unknown { color: var(--text-muted); }
+    
+    .signal-item { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+    .signal-item:last-child { border-bottom: none; }
+    .signal-icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .signal-text { font-size: 0.85rem; color: var(--text-secondary); }
+    
+    .concern-item { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--danger-bg); border-radius: 6px; margin-bottom: 0.5rem; }
+    .concern-item:last-child { margin-bottom: 0; }
+    .concern-item.warning { background: var(--warning-bg); }
+    .concern-icon { font-size: 1rem; flex-shrink: 0; }
+    .concern-text { font-size: 0.85rem; color: var(--text-primary); }
+    
+    .ref-summary-item { padding: 1rem; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 0.75rem; }
+    .ref-summary-item:last-child { margin-bottom: 0; }
+    .ref-summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+    .ref-summary-name { font-weight: 600; }
+    .ref-summary-score { font-weight: 700; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem; }
+    .ref-summary-score.high { background: var(--success-bg); color: var(--success); }
+    .ref-summary-score.medium { background: var(--warning-bg); color: var(--warning); }
+    .ref-summary-score.low { background: var(--danger-bg); color: var(--danger); }
+    .ref-summary-text { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+    
+    .job-card { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 1.5rem; overflow: hidden; }
+    .job-header { padding: 1rem; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+    .job-company { font-weight: 600; font-size: 1.1rem; }
+    .job-title { color: var(--text-secondary); font-size: 0.9rem; }
+    .job-dates { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .job-body { padding: 1rem; }
+    .job-section { margin-bottom: 1rem; }
+    .job-section:last-child { margin-bottom: 0; }
+    .job-section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600; }
+    .job-item { font-size: 0.85rem; color: var(--text-secondary); padding: 0.25rem 0; padding-left: 1rem; position: relative; }
+    .job-item::before { content: "•"; position: absolute; left: 0; color: var(--accent); }
+    .job-item.achievement::before { content: "★"; color: var(--success); }
+    
+    .references-section { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .references-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
+    
+    .reference-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .reference-card { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .reference-card-header { padding: 0.75rem 1rem; background: var(--bg-secondary); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .reference-name { font-weight: 600; font-size: 0.9rem; }
+    .reference-phone { font-size: 0.8rem; color: var(--text-muted); }
+    
+    .status-badge { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.5rem; border-radius: 100px; font-size: 0.7rem; font-weight: 600; }
+    .status-badge.pending { background: var(--bg-tertiary); color: var(--text-muted); }
+    .status-badge.calling { background: var(--accent-bg); color: var(--accent); animation: pulse 2s infinite; }
+    .status-badge.completed { background: var(--success-bg); color: var(--success); }
+    .status-badge.failed { background: var(--danger-bg); color: var(--danger); }
+    .status-badge.no_answer { background: var(--warning-bg); color: var(--warning); }
+    .status-badge.scheduled { background: var(--accent-bg); color: var(--accent); }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    
+    .reference-card-body { padding: 0.75rem 1rem; }
+    .reference-detail { display: flex; justify-content: space-between; align-items: center; padding: 0.375rem 0; font-size: 0.85rem; }
+    .detail-label { color: var(--text-muted); }
+    .detail-value { font-weight: 500; }
+    
+    .reference-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); flex-wrap: wrap; }
+    
+    .score-display { text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 1rem; }
+    .score-value { font-size: 2rem; font-weight: 700; }
+    .score-value.high { color: var(--success); }
+    .score-value.medium { color: var(--warning); }
+    .score-value.low { color: var(--danger); }
+    .score-label { font-size: 0.8rem; color: var(--text-muted); }
+    
+    .red-flags { background: var(--danger-bg); border: 1px solid rgba(220,38,38,0.2); border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+    .red-flags-title { font-size: 0.85rem; font-weight: 600; color: var(--danger); margin-bottom: 0.5rem; }
+    .red-flag-item { font-size: 0.85rem; color: var(--text-secondary); padding: 0.25rem 0 0.25rem 1rem; position: relative; }
+    .red-flag-item::before { content: "⚠"; position: absolute; left: 0; color: var(--danger); }
+    
+    .discrepancies { background: #fef3c7; border: 1px solid rgba(217,119,6,0.3); border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+    .discrepancies-title { font-size: 0.85rem; font-weight: 600; color: #d97706; margin-bottom: 0.5rem; }
+    .discrepancy-item { font-size: 0.85rem; color: #92400e; padding: 0.25rem 0 0.25rem 1rem; position: relative; }
+    .discrepancy-item::before { content: "⚠"; position: absolute; left: 0; }
+    
+    .summary-box { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; font-size: 0.9rem; color: var(--text-secondary); margin-top: 1rem; }
+    .summary-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600; }
+    
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.2s; }
+    .modal-overlay.visible { opacity: 1; visibility: visible; }
+    .modal { background: var(--bg-primary); border-radius: 12px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
+    .modal-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-weight: 600; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; }
+    .modal-body { padding: 1.5rem; }
+    
+    .loading { text-align: center; padding: 3rem; color: var(--text-muted); }
+    .empty-refs { color: var(--text-muted); font-size: 0.85rem; padding: 1rem; text-align: center; background: var(--bg-secondary); border-radius: 8px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="loading" class="loading">
+    <div class="spinner" style="margin: 0 auto 1rem; width: 32px; height: 32px;"></div>
+    Loading candidate details...
+</div>
+
+<div id="content" class="hidden">
+    <div class="candidate-header">
+        <div class="candidate-avatar" id="candidate-avatar">?</div>
+        <div class="candidate-info">
+            <h1 class="candidate-name" id="candidate-name">Loading...</h1>
+            <p class="candidate-position" id="candidate-position"></p>
+            <div class="candidate-meta">
+                <span class="meta-item" id="candidate-email"></span>
+                <span class="meta-item" id="candidate-phone"></span>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <div class="signal-badge gray" id="signal-badge"><span>No Data</span></div>
+            <button class="btn btn-secondary btn-sm" id="resume-btn" onclick="viewResume()" style="white-space: nowrap;">📄 Resume</button>
+            <button class="btn btn-secondary btn-sm" id="archive-btn" onclick="toggleArchive()" style="white-space: nowrap;">📦 Archive</button>
+            <button class="btn btn-secondary btn-sm" onclick="deleteCandidate()" style="white-space: nowrap; color: var(--danger);">🗑️ Delete</button>
+        </div>
+    </div>
+    
+    <!-- Target Role Card -->
+    <div class="card" style="margin-bottom: 1rem;">
+        <div class="card-header" style="cursor: pointer;" onclick="toggleTargetRoleCard()">
+            <span>🎯 Target Role <span id="target-role-summary" style="font-weight: 400; color: var(--text-muted); font-size: 0.85rem;"></span></span>
+            <span id="target-role-toggle">▼</span>
+        </div>
+        <div class="card-body" id="target-role-body" style="display: none;">
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Set the target role to customize reference questions for this specific position.</p>
+            <div class="form-group">
+                <label>Role Category</label>
+                <select id="target-role-category" onchange="saveTargetRole()">
+                    <option value="">-- Select Category --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Role Details <span style="font-weight: 400; color: var(--text-muted);">(optional)</span></label>
+                <textarea id="target-role-details" rows="2" placeholder="e.g., Senior role, managing team of 5, ML/AI focus..." onblur="saveTargetRole()"></textarea>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('references')">📞 References</button>
+        <button class="tab" onclick="showTab('jobs')">💼 Work History</button>
+        <button class="tab" onclick="showTab('summary')">📊 Summary</button>
+    </div>
+    
+    <div class="tab-content active" id="tab-references">
+        <div class="grid">
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <span>📞 All References</span>
+                        <span id="progress-text" style="font-weight: 400; color: var(--text-muted); font-size: 0.85rem;">0 of 0 completed</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="reference-list" id="reference-list"></div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="card" style="margin-bottom: 1rem;">
+                    <div class="card-header">📧 Request References from Candidate</div>
+                    <div class="card-body">
+                        <div id="ref-request-status" style="margin-bottom: 0.75rem;"></div>
+                        <button class="btn btn-secondary" style="width: 100%;" onclick="sendReferenceRequest()" id="request-refs-btn">📧 Send Request Email</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">⚡ Quick Actions</div>
+                    <div class="card-body">
+                        <button class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;" onclick="callAllPending()">📞 Call All Pending</button>
+                        <button class="btn btn-secondary" style="width: 100%;" onclick="sendAllSMS()">💬 Send SMS to Unanswered</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tab-content" id="tab-jobs">
+        <div id="jobs-list"></div>
+    </div>
+    
+    <div class="tab-content" id="tab-summary">
+        <div class="summary-grid">
+            <div class="card">
+                <div class="card-header">📊 Overall Score</div>
+                <div class="card-body" id="summary-score-section">
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Complete reference checks to see summary.</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">🎯 Skills & Performance Radar</div>
+                <div class="card-body" style="display: flex; justify-content: center; align-items: center; min-height: 280px;">
+                    <canvas id="radar-chart" width="280" height="280" style="max-width: 100%;"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">✅ Verification Status</div>
+                <div class="card-body" id="verification-status-section"></div>
+            </div>
+            <div class="card">
+                <div class="card-header">📈 Score Breakdown</div>
+                <div class="card-body" style="min-height: 200px;">
+                    <canvas id="score-breakdown-chart" height="180"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="summary-bottom-grid">
+            <div class="card">
+                <div class="card-header">✨ Positive Signals</div>
+                <div class="card-body" id="positive-signals-section"></div>
+            </div>
+            <div class="card">
+                <div class="card-header">⚠️ Discrepancies & Red Flags</div>
+                <div class="card-body" id="concerns-section"></div>
+            </div>
+        </div>
+        <div class="card" style="margin-top: 1rem;">
+            <div class="card-header">📝 Reference Summaries</div>
+            <div class="card-body" id="reference-summaries-section"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="schedule-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">Schedule Follow-up Call</span>
+            <button class="modal-close" onclick="closeScheduleModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group"><label>Reference Name</label><input type="text" id="schedule-ref-name" readonly></div>
+            <div class="form-group"><label>Date & Time</label><input type="datetime-local" id="schedule-datetime"></div>
+            <div class="form-group"><label>Timezone</label><select id="schedule-timezone"><option value="America/New_York">Eastern Time</option><option value="America/Chicago">Central Time</option><option value="America/Denver">Mountain Time</option><option value="America/Los_Angeles">Pacific Time</option><option value="UTC">UTC</option></select></div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="confirmSchedule()">Confirm Schedule</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="results-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">Reference Check Results</span>
+            <button class="modal-close" onclick="closeResultsModal()">×</button>
+        </div>
+        <div class="modal-body" id="results-content"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="edit-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title" id="edit-modal-title">Edit Reference</span>
+            <button class="modal-close" onclick="closeEditModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="edit-ref-id">
+            <input type="hidden" id="edit-job-index">
+            <div class="form-group"><label>Name *</label><input type="text" id="edit-ref-name" required></div>
+            <div class="form-group"><label>Phone *</label><input type="tel" id="edit-ref-phone" required></div>
+            <div class="form-group"><label>Email</label><input type="email" id="edit-ref-email"></div>
+            <div class="form-group"><label>Relationship</label><input type="text" id="edit-ref-relationship" placeholder="e.g., Manager, Colleague"></div>
+            <div class="form-group">
+                <label>Contact Method</label>
+                <select id="edit-ref-contact-method">
+                    <option value="call_only">Phone Call Only</option>
+                    <option value="survey_only">Survey Only</option>
+                    <option value="call_and_survey">Both Call + Survey</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Custom Questions (one per line)</label><textarea id="edit-ref-questions" rows="3" placeholder="Add specific questions for phone call..."></textarea></div>
+            <div style="display: flex; gap: 0.75rem;"><button class="btn btn-primary" style="flex: 1;" onclick="saveReference()">Save</button><button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="survey-preview-modal">
+    <div class="modal" style="max-width: 700px;">
+        <div class="modal-header">
+            <span class="modal-title">Review Survey Questions</span>
+            <button class="modal-close" onclick="closeSurveyPreviewModal()">×</button>
+        </div>
+        <div class="modal-body" id="survey-preview-content">
+            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading questions...</div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="survey-results-modal">
+    <div class="modal" style="max-width: 700px;">
+        <div class="modal-header">
+            <span class="modal-title">Survey Results</span>
+            <button class="modal-close" onclick="closeSurveyResultsModal()">×</button>
+        </div>
+        <div class="modal-body" id="survey-results-content"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const candidateId = '{{ candidate_id }}';
+let candidateData = null;
+let pollIntervals = {};
+let currentScheduleRef = null;
+
+function showTab(tabName) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+}
+
+async function loadCandidate() {
+    try {
+        const response = await fetch(`/api/candidates/${candidateId}`);
+        candidateData = await response.json();
+        if (candidateData.error) { window.location.href = '/'; return; }
+        renderCandidate();
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('content').classList.remove('hidden');
+        candidateData.references.forEach(ref => {
+            if (ref.status === 'calling') startPolling(ref.id, ref.call_id);
+        });
+        // Load role categories
+        loadRoleCategories();
+    } catch (error) { console.error('Error:', error); }
+}
+
+async function loadRoleCategories() {
+    try {
+        const response = await fetch('/api/role-categories');
+        const categories = await response.json();
+        const select = document.getElementById('target-role-category');
+        select.innerHTML = '<option value="">-- Select Category --</option>';
+        categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            if (candidateData.target_role_category === cat) option.selected = true;
+            select.appendChild(option);
+        });
+        // Set details
+        document.getElementById('target-role-details').value = candidateData.target_role_details || '';
+        // Update summary
+        updateTargetRoleSummary();
+    } catch (e) { console.error('Error loading categories:', e); }
+}
+
+function updateTargetRoleSummary() {
+    const cat = candidateData.target_role_category;
+    const details = candidateData.target_role_details;
+    const summary = document.getElementById('target-role-summary');
+    if (cat) {
+        summary.textContent = `— ${cat}${details ? ' • ' + details.substring(0, 30) + (details.length > 30 ? '...' : '') : ''}`;
+    } else {
+        summary.textContent = '— Not set';
+    }
+}
+
+function toggleTargetRoleCard() {
+    const body = document.getElementById('target-role-body');
+    const toggle = document.getElementById('target-role-toggle');
+    if (body.style.display === 'none') {
+        body.style.display = 'block';
+        toggle.textContent = '▲';
+    } else {
+        body.style.display = 'none';
+        toggle.textContent = '▼';
+    }
+}
+
+async function saveTargetRole() {
+    const category = document.getElementById('target-role-category').value;
+    const details = document.getElementById('target-role-details').value.trim();
+    
+    try {
+        const response = await fetch(`/api/candidates/${candidateId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                target_role_category: category || null,
+                target_role_details: details || null
+            })
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        candidateData.target_role_category = category;
+        candidateData.target_role_details = details;
+        updateTargetRoleSummary();
+    } catch (error) { console.error('Error saving target role:', error); }
+}
+
+function renderCandidate() {
+    document.getElementById('candidate-name').textContent = candidateData.name;
+    document.getElementById('candidate-avatar').textContent = candidateData.name.charAt(0).toUpperCase();
+    document.getElementById('candidate-position').textContent = candidateData.position || 'Position not specified';
+    if (candidateData.email) document.getElementById('candidate-email').innerHTML = `📧 ${candidateData.email}`;
+    if (candidateData.phone) document.getElementById('candidate-phone').innerHTML = `📱 ${candidateData.phone}`;
+    
+    const signal = candidateData.signal;
+    const signalBadge = document.getElementById('signal-badge');
+    signalBadge.className = `signal-badge ${signal.color}`;
+    signalBadge.innerHTML = signal.score !== null ? `<span class="signal-score">${signal.score}</span><span>${signal.label}</span>` : `<span>${signal.label}</span>`;
+    
+    // Update archive button
+    const archiveBtn = document.getElementById('archive-btn');
+    if (candidateData.status === 'archived') {
+        archiveBtn.textContent = '📤 Unarchive';
+        archiveBtn.title = 'Restore this candidate to active';
+    } else {
+        archiveBtn.textContent = '📦 Archive';
+        archiveBtn.title = 'Archive this candidate';
+    }
+    
+    const progress = candidateData.reference_progress;
+    document.getElementById('progress-text').textContent = `${progress.completed} of ${progress.total} completed`;
+    
+    renderReferences();
+    renderJobs();
+    renderSummary();
+}
+
+function renderReferences() {
+    const container = document.getElementById('reference-list');
+    const refs = candidateData.references || [];
+    
+    if (refs.length === 0) {
+        container.innerHTML = '<div class="empty-refs">No references added yet. Go to Work History tab to add references.</div>';
+        return;
+    }
+    
+    const statusLabels = { pending: '⏳ Pending', calling: '📞 Calling...', completed: '✓ Done', failed: '✗ Failed', no_answer: '📵 No Answer', scheduled: '📅 Scheduled' };
+    const contactMethodLabels = { call_only: '📞 Call', survey_only: '📋 Survey', call_and_survey: '📞+📋 Both' };
+    const surveyStatusLabels = { not_sent: '', pending: '📋 Survey Pending', completed: '📋 Survey Done' };
+    
+    container.innerHTML = refs.map(ref => {
+        const job = candidateData.jobs.find(j => j.id === ref.job_id) || candidateData.jobs[0] || {};
+        const scoreClass = ref.score >= 70 ? 'high' : ref.score >= 40 ? 'medium' : 'low';
+        const contactMethod = ref.contact_method || 'call_only';
+        const surveyStatus = ref.survey_status || 'not_sent';
+        const showCallBtn = contactMethod === 'call_only' || contactMethod === 'call_and_survey';
+        const showSurveyBtn = contactMethod === 'survey_only' || contactMethod === 'call_and_survey';
+        
+        return `
+            <div class="reference-card">
+                <div class="reference-card-header">
+                    <div>
+                        <div class="reference-name">${escapeHtml(ref.name)}</div>
+                        <div class="reference-phone">${escapeHtml(ref.phone)} ${job.company ? '• ' + escapeHtml(job.company) : ''}</div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span class="status-badge" style="background: var(--bg-tertiary); color: var(--text-muted);">${contactMethodLabels[contactMethod]}</span>
+                        <span class="status-badge ${ref.status}">${statusLabels[ref.status] || ref.status}</span>
+                        ${surveyStatus !== 'not_sent' ? `<span class="status-badge ${surveyStatus === 'completed' ? 'completed' : 'scheduled'}">${surveyStatusLabels[surveyStatus]}</span>` : ''}
+                    </div>
+                </div>
+                <div class="reference-card-body">
+                    ${ref.relationship ? `<div class="reference-detail"><span class="detail-label">Relationship</span><span class="detail-value">${escapeHtml(ref.relationship)}</span></div>` : ''}
+                    ${ref.scheduled_time ? `<div class="reference-detail"><span class="detail-label">Scheduled</span><span class="detail-value">${formatDateTime(ref.scheduled_time)}</span></div>` : ''}
+                    ${ref.score !== null ? `<div class="reference-detail"><span class="detail-label">Call Score</span><span class="detail-value score-value ${scoreClass}">${ref.score}</span></div>` : ''}
+                    ${ref.sms_sent ? `<div class="reference-detail"><span class="detail-label">SMS</span><span class="detail-value" style="color: var(--success);">✓ Sent</span></div>` : ''}
+                    ${ref.notes && (ref.status === 'no_answer' || ref.status === 'failed') ? `<div class="reference-detail"><span class="detail-label">Note</span><span class="detail-value" style="color: var(--warning);">${escapeHtml(ref.notes)}</span></div>` : ''}
+                    <div class="reference-actions">
+                        ${ref.status === 'pending' && showCallBtn ? `<button class="btn btn-primary btn-sm" onclick="startCall('${ref.id}')">📞 Call</button>` : ''}
+                        ${ref.status === 'pending' && showSurveyBtn && surveyStatus === 'not_sent' ? `<button class="btn btn-primary btn-sm" onclick="openSurveyPreview('${ref.id}')">📋 Send Survey</button>` : ''}
+                        ${ref.status === 'pending' ? `<button class="btn btn-secondary btn-sm" onclick="openEditModal('${ref.id}')">✏️ Edit</button>` : ''}
+                        ${ref.status === 'no_answer' && showCallBtn ? `<button class="btn btn-primary btn-sm" onclick="startCall('${ref.id}')">📞 Retry</button><button class="btn btn-secondary btn-sm" onclick="openScheduleModal('${ref.id}', '${escapeHtml(ref.name)}')">📅 Schedule</button>${!ref.sms_sent ? `<button class="btn btn-secondary btn-sm" onclick="sendSMS('${ref.id}')">💬 SMS</button>` : ''}` : ''}
+                        ${ref.status === 'no_answer' && showSurveyBtn && surveyStatus === 'not_sent' ? `<button class="btn btn-secondary btn-sm" onclick="openSurveyPreview('${ref.id}')">📋 Send Survey</button>` : ''}
+                        ${ref.status === 'scheduled' && showCallBtn ? `<button class="btn btn-primary btn-sm" onclick="startCall('${ref.id}')">📞 Call Now</button><button class="btn btn-secondary btn-sm" onclick="openScheduleModal('${ref.id}', '${escapeHtml(ref.name)}')">📅 Reschedule</button>` : ''}
+                        ${ref.status === 'completed' ? `<button class="btn btn-secondary btn-sm" onclick="viewResults('${ref.call_id}')">📊 Call Results</button>` : ''}
+                        ${surveyStatus === 'completed' ? `<button class="btn btn-secondary btn-sm" onclick="viewSurveyResults('${ref.id}')">📋 Survey Results</button>` : ''}
+                        ${surveyStatus === 'pending' ? `<span style="color: var(--text-muted); font-size: 0.8rem;">Awaiting survey response</span>` : ''}
+                        ${ref.status === 'failed' && showCallBtn ? `<button class="btn btn-primary btn-sm" onclick="startCall('${ref.id}')">🔄 Retry</button>` : ''}
+                        ${ref.status === 'calling' ? `<span style="color: var(--text-muted); font-size: 0.85rem;">Call in progress...</span>` : ''}
+                        ${ref.status !== 'calling' ? `<button class="btn btn-secondary btn-sm" onclick="deleteReference('${ref.id}')" title="Delete reference">🗑️</button>` : ''}
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+function renderJobs() {
+    const container = document.getElementById('jobs-list');
+    const jobs = candidateData.jobs || [];
+    
+    if (jobs.length === 0) {
+        container.innerHTML = '<div class="card"><div class="card-body"><p style="color: var(--text-muted);">No work history available.</p></div></div>';
+        return;
+    }
+    
+    const statusLabels = { pending: '⏳', calling: '📞', completed: '✓', failed: '✗', no_answer: '📵', scheduled: '📅' };
+    
+    container.innerHTML = jobs.map((job, index) => {
+        const jobRefs = candidateData.references.filter(r => r.job_id === job.id);
+        return `
+            <div class="job-card">
+                <div class="job-header">
+                    <div class="job-company">${escapeHtml(job.company)}</div>
+                    <div class="job-title">${escapeHtml(job.title)}</div>
+                    <div class="job-dates">${escapeHtml(job.dates)}</div>
+                </div>
+                <div class="job-body">
+                    ${job.responsibilities?.length ? `<div class="job-section"><div class="job-section-title">Responsibilities</div>${job.responsibilities.map(r => `<div class="job-item">${escapeHtml(r)}</div>`).join('')}</div>` : ''}
+                    ${job.achievements?.length ? `<div class="job-section"><div class="job-section-title">Achievements</div>${job.achievements.map(a => `<div class="job-item achievement">${escapeHtml(a)}</div>`).join('')}</div>` : ''}
+                    <div class="references-section">
+                        <div class="references-title">
+                            <span>👥 References for this role (${jobRefs.length})</span>
+                            <button class="btn btn-sm btn-secondary" onclick="openAddModal(${index}, '${job.id}')">+ Add</button>
+                        </div>
+                        ${jobRefs.length > 0 ? `<div class="reference-list">${jobRefs.map(ref => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; background: var(--bg-secondary); border-radius: 6px;">
+                                <div>
+                                    <div style="font-weight: 500; font-size: 0.9rem;">${escapeHtml(ref.name)} <span class="status-badge ${ref.status}">${statusLabels[ref.status] || ''}</span></div>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(ref.phone)}</div>
+                                </div>
+                                <div style="display: flex; gap: 0.25rem;">
+                                    <button class="btn btn-sm btn-secondary" onclick="openEditModal('${ref.id}')" style="padding: 0.25rem 0.5rem;">✏️</button>
+                                    ${ref.status !== 'calling' ? `<button class="btn btn-sm btn-secondary" onclick="deleteReference('${ref.id}')" style="padding: 0.25rem 0.5rem;">🗑️</button>` : ''}
+                                </div>
+                            </div>`).join('')}</div>` : '<div class="empty-refs">No references yet for this role</div>'}
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+function renderSummary() {
+    const completedRefs = candidateData.references.filter(r => r.status === 'completed' && r.score !== null);
+    
+    // Score section
+    const scoreSection = document.getElementById('summary-score-section');
+    const verificationSection = document.getElementById('verification-status-section');
+    const positiveSection = document.getElementById('positive-signals-section');
+    const concernsSection = document.getElementById('concerns-section');
+    const summariesSection = document.getElementById('reference-summaries-section');
+    
+    if (completedRefs.length === 0) {
+        scoreSection.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">Complete reference checks to see summary.</p>';
+        verificationSection.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No data yet.</p>';
+        positiveSection.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No data yet.</p>';
+        concernsSection.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No data yet.</p>';
+        summariesSection.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No data yet.</p>';
+        return;
+    }
+    
+    // Calculate aggregates
+    const avgScore = Math.round(completedRefs.reduce((sum, r) => sum + r.score, 0) / completedRefs.length);
+    const allRedFlags = completedRefs.flatMap(r => r.red_flags || []);
+    const allDiscrepancies = completedRefs.flatMap(r => r.discrepancies || []);
+    const allPositiveSignals = completedRefs.flatMap(r => r.positive_signals || []);
+    const allAchievementsVerified = completedRefs.flatMap(r => r.achievements_verified || []);
+    const allAchievementsNotVerified = completedRefs.flatMap(r => r.achievements_not_verified || []);
+    
+    // Score display
+    const scoreClass = avgScore >= 70 ? 'high' : avgScore >= 40 ? 'medium' : 'low';
+    scoreSection.innerHTML = `
+        <div style="text-align: center; padding: 1rem 0;">
+            <div class="big-score ${scoreClass}">${avgScore}</div>
+            <div class="score-label">Average Reference Score</div>
+            <div class="score-sublabel">${completedRefs.length} reference${completedRefs.length > 1 ? 's' : ''} completed</div>
+        </div>
+    `;
+    
+    // Verification status - aggregate from all refs
+    const verificationData = {
+        employment: { confirmed: 0, denied: 0, unknown: 0 },
+        dates: { confirmed: 0, denied: 0, unknown: 0 },
+        title: { confirmed: 0, denied: 0, unknown: 0 },
+        rehire: { confirmed: 0, denied: 0, unknown: 0 }
+    };
+    
+    // We need structured_data to get detailed verification info
+    // For now, derive from score and flags
+    completedRefs.forEach(ref => {
+        // Check red flags for verification issues
+        const flags = (ref.red_flags || []).join(' ').toLowerCase();
+        
+        if (flags.includes('employment not confirmed')) verificationData.employment.denied++;
+        else if (ref.score >= 50) verificationData.employment.confirmed++;
+        else verificationData.employment.unknown++;
+        
+        if (flags.includes('dates disputed')) verificationData.dates.denied++;
+        else if (ref.score >= 50) verificationData.dates.confirmed++;
+        else verificationData.dates.unknown++;
+        
+        if (flags.includes('title not confirmed')) verificationData.title.denied++;
+        else if (ref.score >= 50) verificationData.title.confirmed++;
+        else verificationData.title.unknown++;
+        
+        if (flags.includes('would not rehire')) verificationData.rehire.denied++;
+        else if (ref.score >= 70) verificationData.rehire.confirmed++;
+        else verificationData.rehire.unknown++;
+    });
+    
+    function getVerificationStatus(data) {
+        if (data.denied > 0) return { icon: '❌', status: 'denied', label: 'Issues Found' };
+        if (data.confirmed > 0) return { icon: '✅', status: 'confirmed', label: 'Confirmed' };
+        return { icon: '❓', status: 'unknown', label: 'Unknown' };
+    }
+    
+    const empStatus = getVerificationStatus(verificationData.employment);
+    const dateStatus = getVerificationStatus(verificationData.dates);
+    const titleStatus = getVerificationStatus(verificationData.title);
+    const rehireStatus = getVerificationStatus(verificationData.rehire);
+    
+    verificationSection.innerHTML = `
+        <div class="verification-grid">
+            <div class="verification-item">
+                <span class="verification-icon">${empStatus.icon}</span>
+                <div>
+                    <div class="verification-label">Employment</div>
+                    <div class="verification-status ${empStatus.status}">${empStatus.label}</div>
+                </div>
+            </div>
+            <div class="verification-item">
+                <span class="verification-icon">${dateStatus.icon}</span>
+                <div>
+                    <div class="verification-label">Dates</div>
+                    <div class="verification-status ${dateStatus.status}">${dateStatus.label}</div>
+                </div>
+            </div>
+            <div class="verification-item">
+                <span class="verification-icon">${titleStatus.icon}</span>
+                <div>
+                    <div class="verification-label">Job Title</div>
+                    <div class="verification-status ${titleStatus.status}">${titleStatus.label}</div>
+                </div>
+            </div>
+            <div class="verification-item">
+                <span class="verification-icon">${rehireStatus.icon}</span>
+                <div>
+                    <div class="verification-label">Would Rehire</div>
+                    <div class="verification-status ${rehireStatus.status}">${rehireStatus.label}</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Positive signals
+    if (allPositiveSignals.length > 0 || allAchievementsVerified.length > 0) {
+        const uniquePositive = [...new Set([...allPositiveSignals, ...allAchievementsVerified.map(a => `Verified: ${a}`)])];
+        positiveSection.innerHTML = uniquePositive.slice(0, 8).map(signal => `
+            <div class="signal-item">
+                <span class="signal-icon">✨</span>
+                <span class="signal-text">${escapeHtml(signal)}</span>
+            </div>
+        `).join('');
+    } else {
+        positiveSection.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No specific positive signals recorded.</p>';
+    }
+    
+    // Concerns (red flags + discrepancies)
+    const allConcerns = [
+        ...new Set(allDiscrepancies).values()
+    ].map(d => ({ type: 'warning', text: d }));
+    
+    [...new Set(allRedFlags)].forEach(f => {
+        if (!allConcerns.find(c => c.text === f)) {
+            allConcerns.push({ type: 'danger', text: f });
+        }
+    });
+    
+    if (allConcerns.length > 0) {
+        concernsSection.innerHTML = allConcerns.slice(0, 10).map(concern => `
+            <div class="concern-item ${concern.type === 'warning' ? 'warning' : ''}">
+                <span class="concern-icon">${concern.type === 'warning' ? '⚠️' : '🚩'}</span>
+                <span class="concern-text">${escapeHtml(concern.text)}</span>
+            </div>
+        `).join('');
+    } else {
+        concernsSection.innerHTML = '<p style="color: var(--success); font-size: 0.9rem;">✅ No concerns or red flags identified.</p>';
+    }
+    
+    // Reference summaries
+    summariesSection.innerHTML = completedRefs.map(ref => {
+        const job = candidateData.jobs.find(j => j.id === ref.job_id) || {};
+        const refScoreClass = ref.score >= 70 ? 'high' : ref.score >= 40 ? 'medium' : 'low';
+        return `
+            <div class="ref-summary-item">
+                <div class="ref-summary-header">
+                    <span class="ref-summary-name">${escapeHtml(ref.name)} ${job.company ? `(${escapeHtml(job.company)})` : ''}</span>
+                    <span class="ref-summary-score ${refScoreClass}">${ref.score}</span>
+                </div>
+                <div class="ref-summary-text">${escapeHtml(ref.summary || 'No summary available.')}</div>
+            </div>
+        `;
+    }).join('');
+    
+    // Render charts
+    renderRadarChart(completedRefs, avgScore);
+    renderScoreBreakdownChart(completedRefs);
+}
+
+function renderRadarChart(completedRefs, avgScore) {
+    const ctx = document.getElementById('radar-chart');
+    if (!ctx) return;
+    
+    // Destroy existing chart if any
+    if (window.radarChartInstance) {
+        window.radarChartInstance.destroy();
+    }
+    
+    // Calculate dimension scores (0-100 scale)
+    const allRedFlags = completedRefs.flatMap(r => r.red_flags || []).join(' ').toLowerCase();
+    const allPositive = completedRefs.flatMap(r => r.positive_signals || []);
+    const achievementsVerified = completedRefs.flatMap(r => r.achievements_verified || []).length;
+    const achievementsNotVerified = completedRefs.flatMap(r => r.achievements_not_verified || []).length;
+    
+    // Calculate dimension scores
+    const employmentScore = allRedFlags.includes('employment') ? 30 : avgScore >= 50 ? 90 : 60;
+    const skillsScore = achievementsVerified > achievementsNotVerified ? 85 : achievementsNotVerified > 0 ? 50 : 70;
+    const reliabilityScore = allRedFlags.includes('reliab') || allRedFlags.includes('inconsist') ? 40 : avgScore >= 60 ? 85 : 65;
+    const teamworkScore = allPositive.some(p => p.toLowerCase().includes('team')) ? 90 : avgScore >= 50 ? 75 : 55;
+    const rehireScore = allRedFlags.includes('not rehire') || allRedFlags.includes('would not') ? 25 : avgScore >= 70 ? 90 : 60;
+    
+    window.radarChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['Employment Verified', 'Skills Confirmed', 'Reliability', 'Teamwork', 'Rehire Likelihood'],
+            datasets: [{
+                label: 'Reference Assessment',
+                data: [employmentScore, skillsScore, reliabilityScore, teamworkScore, rehireScore],
+                backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                borderColor: 'rgba(99, 102, 241, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(99, 102, 241, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(99, 102, 241, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 25,
+                        font: { size: 10 },
+                        backdropColor: 'transparent'
+                    },
+                    pointLabels: {
+                        font: { size: 11, weight: '500' }
+                    },
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+}
+
+function renderScoreBreakdownChart(completedRefs) {
+    const ctx = document.getElementById('score-breakdown-chart');
+    if (!ctx) return;
+    
+    // Destroy existing chart if any
+    if (window.scoreBreakdownInstance) {
+        window.scoreBreakdownInstance.destroy();
+    }
+    
+    const labels = completedRefs.map(r => {
+        const job = candidateData.jobs.find(j => j.id === r.job_id);
+        return r.name.split(' ')[0] + (job ? ` (${job.company?.substring(0,10) || ''})` : '');
+    });
+    
+    const scores = completedRefs.map(r => r.score);
+    const colors = scores.map(s => s >= 70 ? 'rgba(34, 197, 94, 0.8)' : s >= 40 ? 'rgba(234, 179, 8, 0.8)' : 'rgba(239, 68, 68, 0.8)');
+    
+    window.scoreBreakdownInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Score',
+                data: scores,
+                backgroundColor: colors,
+                borderRadius: 6,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { display: false },
+                    ticks: { font: { size: 11 } }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: { font: { size: 11 } }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+}
+
+function openAddModal(jobIndex, jobId) {
+    document.getElementById('edit-modal-title').textContent = 'Add Reference';
+    document.getElementById('edit-ref-id').value = '';
+    document.getElementById('edit-job-index').value = jobIndex;
+    document.getElementById('edit-ref-name').value = '';
+    document.getElementById('edit-ref-phone').value = '';
+    document.getElementById('edit-ref-email').value = '';
+    document.getElementById('edit-ref-relationship').value = '';
+    document.getElementById('edit-ref-questions').value = '';
+    document.getElementById('edit-modal').classList.add('visible');
+}
+
+function openEditModal(refId) {
+    const ref = candidateData.references.find(r => r.id === refId);
+    if (!ref) return;
+    document.getElementById('edit-modal-title').textContent = 'Edit Reference';
+    document.getElementById('edit-ref-id').value = refId;
+    document.getElementById('edit-job-index').value = '';
+    document.getElementById('edit-ref-name').value = ref.name || '';
+    document.getElementById('edit-ref-phone').value = ref.phone || '';
+    document.getElementById('edit-ref-email').value = ref.email || '';
+    document.getElementById('edit-ref-relationship').value = ref.relationship || '';
+    document.getElementById('edit-ref-contact-method').value = ref.contact_method || 'call_only';
+    document.getElementById('edit-ref-questions').value = (ref.custom_questions || []).join('\n');
+    document.getElementById('edit-modal').classList.add('visible');
+}
+
+function closeEditModal() { document.getElementById('edit-modal').classList.remove('visible'); }
+
+async function saveReference() {
+    const refId = document.getElementById('edit-ref-id').value;
+    const jobIndex = document.getElementById('edit-job-index').value;
+    const name = document.getElementById('edit-ref-name').value.trim();
+    const phone = document.getElementById('edit-ref-phone').value.trim();
+    const email = document.getElementById('edit-ref-email').value.trim();
+    const relationship = document.getElementById('edit-ref-relationship').value.trim();
+    const contactMethod = document.getElementById('edit-ref-contact-method').value;
+    const questions = document.getElementById('edit-ref-questions').value.trim().split('\n').filter(q => q.trim());
+    
+    if (!name || !phone) { alert('Name and phone are required'); return; }
+    
+    // Validate email is provided if survey is selected
+    if ((contactMethod === 'survey_only' || contactMethod === 'call_and_survey') && !email) {
+        alert('Email is required when using survey contact method');
+        return;
+    }
+    
+    try {
+        let response;
+        if (refId) {
+            response = await fetch(`/api/candidates/${candidateId}/references/${refId}`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, phone, email, relationship, contact_method: contactMethod, custom_questions: questions })
+            });
+        } else {
+            response = await fetch(`/api/candidates/${candidateId}/references`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reference_name: name, reference_phone: phone, reference_email: email, relationship, contact_method: contactMethod, job_index: parseInt(jobIndex), custom_questions: questions })
+            });
+        }
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        closeEditModal();
+        loadCandidate();
+    } catch (error) { alert('Error: ' + error.message); }
+}
+
+async function deleteReference(refId) {
+    if (!confirm('Delete this reference?')) return;
+    try {
+        const response = await fetch(`/api/candidates/${candidateId}/references/${refId}`, { method: 'DELETE' });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        loadCandidate();
+    } catch (error) { alert('Error: ' + error.message); }
+}
+
+async function startCall(refId) {
+    const ref = candidateData.references.find(r => r.id === refId);
+    if (!ref) return;
+    ref.status = 'calling';
+    renderReferences();
+    renderJobs();
+    try {
+        const response = await fetch('/api/start-reference-check', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ candidate_id: candidateId, reference_id: refId })
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        ref.call_id = data.check_id;
+        startPolling(refId, data.check_id);
+    } catch (error) {
+        ref.status = 'failed';
+        renderReferences();
+        renderJobs();
+        alert('Error: ' + error.message);
+    }
+}
+
+function startPolling(refId, checkId) {
+    if (pollIntervals[refId]) clearInterval(pollIntervals[refId]);
+    pollIntervals[refId] = setInterval(async () => {
+        try {
+            const response = await fetch(`/api/check-status/${checkId}`);
+            const data = await response.json();
+            if (data.status === 'ended' || data.status === 'failed') {
+                clearInterval(pollIntervals[refId]);
+                loadCandidate();
+            }
+        } catch (e) { console.error('Poll error:', e); }
+    }, 3000);
+}
+
+async function sendSMS(refId) {
+    try {
+        const response = await fetch(`/api/candidates/${candidateId}/references/${refId}/send-sms`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({})
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        loadCandidate();
+        alert('SMS sent successfully!');
+    } catch (error) { alert('Error: ' + error.message); }
+}
+
+function openScheduleModal(refId, refName) {
+    currentScheduleRef = refId;
+    document.getElementById('schedule-ref-name').value = refName;
+    document.getElementById('schedule-modal').classList.add('visible');
+}
+
+function closeScheduleModal() {
+    document.getElementById('schedule-modal').classList.remove('visible');
+    currentScheduleRef = null;
+}
+
+async function confirmSchedule() {
+    const datetime = document.getElementById('schedule-datetime').value;
+    const timezone = document.getElementById('schedule-timezone').value;
+    if (!datetime) { alert('Please select a date and time'); return; }
+    try {
+        await fetch(`/api/candidates/${candidateId}/references/${currentScheduleRef}/schedule`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scheduled_time: datetime, timezone })
+        });
+        closeScheduleModal();
+        loadCandidate();
+    } catch (error) { alert('Error: ' + error.message); }
+}
+
+async function viewResults(checkId) {
+    const modal = document.getElementById('results-modal');
+    const content = document.getElementById('results-content');
+    modal.classList.add('visible');
+    content.innerHTML = '<div class="loading"><div class="spinner" style="margin: 0 auto;"></div></div>';
+    try {
+        const response = await fetch(`/api/check-status/${checkId}`);
+        const data = await response.json();
+        const scoreClass = data.verification_score >= 70 ? 'high' : data.verification_score >= 40 ? 'medium' : 'low';
+        content.innerHTML = `
+            <div class="score-display"><div class="score-value ${scoreClass}">${data.verification_score || '--'}</div><div class="score-label">Verification Score</div></div>
+            ${data.discrepancies?.length ? `<div class="discrepancies"><div class="discrepancies-title">⚠️ Discrepancies</div>${data.discrepancies.map(d => `<div class="discrepancy-item">${escapeHtml(d)}</div>`).join('')}</div>` : ''}
+            ${data.red_flags?.length ? `<div class="red-flags"><div class="red-flags-title">🚩 Red Flags</div>${data.red_flags.map(f => `<div class="red-flag-item">${escapeHtml(f)}</div>`).join('')}</div>` : ''}
+            ${data.achievements_verified?.length ? `<div class="summary-box" style="background: var(--success-bg);"><div class="summary-title" style="color: var(--success);">✓ Verified</div>${data.achievements_verified.map(a => `<p>• ${escapeHtml(a)}</p>`).join('')}</div>` : ''}
+            ${data.achievements_not_verified?.length ? `<div class="summary-box" style="background: var(--danger-bg);"><div class="summary-title" style="color: var(--danger);">✗ Not Verified</div>${data.achievements_not_verified.map(a => `<p>• ${escapeHtml(a)}</p>`).join('')}</div>` : ''}
+            <div class="summary-box"><div class="summary-title">Summary</div><p>${escapeHtml(data.summary || 'No summary available.')}</p></div>
+            <div class="summary-box"><div class="summary-title">Transcript</div><p style="white-space: pre-wrap; font-size: 0.85rem; max-height: 200px; overflow-y: auto;">${escapeHtml(data.transcript || 'No transcript.')}</p></div>`;
+    } catch (error) { content.innerHTML = `<p style="color: var(--danger);">Error: ${error.message}</p>`; }
+}
+
+function closeResultsModal() { document.getElementById('results-modal').classList.remove('visible'); }
+
+async function callAllPending() {
+    const pending = candidateData.references.filter(r => r.status === 'pending');
+    if (pending.length === 0) { alert('No pending references'); return; }
+    for (const ref of pending) { await startCall(ref.id); await new Promise(r => setTimeout(r, 1000)); }
+}
+
+async function sendAllSMS() {
+    const noAnswer = candidateData.references.filter(r => r.status === 'no_answer' && !r.sms_sent);
+    if (noAnswer.length === 0) { alert('No unanswered references without SMS'); return; }
+    for (const ref of noAnswer) await sendSMS(ref.id);
+}
+
+// Reference Request functions
+async function loadReferenceRequestStatus() {
+    try {
+        const response = await fetch(`/api/candidates/${candidateId}/reference-request-status`);
+        const data = await response.json();
+        renderReferenceRequestStatus(data);
+    } catch (error) { console.error('Error loading reference request status:', error); }
+}
+
+function renderReferenceRequestStatus(data) {
+    const container = document.getElementById('ref-request-status');
+    const btn = document.getElementById('request-refs-btn');
+    
+    if (data.status === 'none') {
+        container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No request sent yet. Send an email to the candidate to request their references.</p>';
+        btn.textContent = '📧 Send Request Email';
+        btn.onclick = sendReferenceRequest;
+    } else if (data.status === 'pending') {
+        const sentDate = data.request?.email_sent_at ? formatDateTime(data.request.email_sent_at) : '';
+        container.innerHTML = `
+            <div style="background: var(--warning-bg); color: var(--warning); padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.85rem;">
+                ⏳ <strong>Awaiting Response</strong><br>
+                <span style="font-size: 0.8rem;">Request sent ${sentDate}</span>
+            </div>`;
+        btn.textContent = '🔄 Send Reminder';
+        btn.onclick = resendReferenceRequest;
+    } else if (data.status === 'completed') {
+        const completedDate = data.request?.completed_at ? formatDateTime(data.request.completed_at) : '';
+        container.innerHTML = `
+            <div style="background: var(--success-bg); color: var(--success); padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.85rem;">
+                ✓ <strong>References Submitted</strong><br>
+                <span style="font-size: 0.8rem;">Completed ${completedDate}</span>
+            </div>`;
+        btn.textContent = '📧 Send New Request';
+        btn.onclick = sendReferenceRequest;
+    } else if (data.status === 'expired') {
+        container.innerHTML = `
+            <div style="background: var(--danger-bg); color: var(--danger); padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.85rem;">
+                ✗ <strong>Request Expired</strong><br>
+                <span style="font-size: 0.8rem;">The previous link has expired</span>
+            </div>`;
+        btn.textContent = '📧 Send New Request';
+        btn.onclick = sendReferenceRequest;
+    }
+}
+
+async function sendReferenceRequest() {
+    if (!candidateData.email) {
+        alert('Candidate email is required. Please add their email address first.');
+        return;
+    }
+    
+    if (!confirm(`Send reference request email to ${candidateData.email}?`)) return;
+    
+    const btn = document.getElementById('request-refs-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    
+    try {
+        const response = await fetch(`/api/candidates/${candidateId}/send-reference-request`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        alert('Reference request email sent successfully!');
+        loadReferenceRequestStatus();
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        loadReferenceRequestStatus();
+    }
+}
+
+async function resendReferenceRequest() {
+    if (!confirm(`Send reminder email to ${candidateData.email}?`)) return;
+    
+    const btn = document.getElementById('request-refs-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    
+    try {
+        const response = await fetch(`/api/candidates/${candidateId}/resend-reference-request`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        alert('Reminder email sent successfully!');
+        loadReferenceRequestStatus();
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        loadReferenceRequestStatus();
+    }
+}
+
+async function toggleArchive() {
+    const isArchived = candidateData.status === 'archived';
+    const action = isArchived ? 'unarchive' : 'archive';
+    
+    if (!confirm(`Are you sure you want to ${action} this candidate?`)) return;
+    
+    const btn = document.getElementById('archive-btn');
+    btn.disabled = true;
+    
+    try {
+        const newStatus = isArchived ? 'completed' : 'archived';
+        const response = await fetch(`/api/candidates/${candidateId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        
+        if (newStatus === 'archived') {
+            alert('Candidate archived. Redirecting to dashboard...');
+            window.location.href = '/dashboard';
+        } else {
+            candidateData.status = newStatus;
+            renderCandidate();
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+        btn.disabled = false;
+    }
+}
+
+function viewResume() {
+    window.open(`/api/candidates/${candidateId}/resume`, '_blank');
+}
+
+async function deleteCandidate() {
+    if (!confirm(`Are you sure you want to permanently delete ${candidateData.name}? This cannot be undone.`)) return;
+    if (!confirm(`This will delete all references and call data for this candidate. Are you absolutely sure?`)) return;
+    
+    try {
+        const response = await fetch(`/api/candidates/${candidateId}`, {
+            method: 'DELETE'
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        
+        alert('Candidate deleted. Redirecting to dashboard...');
+        window.location.href = '/dashboard';
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Survey functions
+let currentSurveyRefId = null;
+let currentSurveyQuestions = [];
+
+async function openSurveyPreview(refId) {
+    currentSurveyRefId = refId;
+    const modal = document.getElementById('survey-preview-modal');
+    const content = document.getElementById('survey-preview-content');
+    modal.classList.add('visible');
+    content.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Generating questions...</div>';
+    
+    try {
+        const response = await fetch(`/api/candidates/${candidateId}/references/${refId}/survey/preview`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        
+        currentSurveyQuestions = data.questions;
+        
+        content.innerHTML = `
+            <p style="margin-bottom: 1rem; color: var(--text-secondary);">Review and edit the survey questions for <strong>${escapeHtml(data.reference.name)}</strong>. The reference will receive these questions via email.</p>
+            <div id="survey-questions-list">
+                ${data.questions.map((q, i) => `
+                    <div class="survey-question-item" style="padding: 0.75rem; margin-bottom: 0.5rem; background: var(--bg-secondary); border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                            <div style="flex: 1;">
+                                <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">${q.question_type === 'ai_generated' ? '🤖 AI Generated' : '📋 Standard'} • ${q.response_type}</span>
+                                <textarea id="sq-${i}" style="width: 100%; margin-top: 0.25rem; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; min-height: 60px;">${escapeHtml(q.question_text)}</textarea>
+                            </div>
+                            <button onclick="removeSurveyQuestion(${i})" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 0.25rem;">🗑️</button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+                <button class="btn btn-primary" style="flex: 1;" onclick="sendSurvey()">📧 Send Survey</button>
+                <button class="btn btn-secondary" onclick="closeSurveyPreviewModal()">Cancel</button>
+            </div>
+        `;
+    } catch (error) {
+        content.innerHTML = `<p style="color: var(--danger);">Error: ${error.message}</p>`;
+    }
+}
+
+function removeSurveyQuestion(index) {
+    currentSurveyQuestions.splice(index, 1);
+    openSurveyPreview(currentSurveyRefId); // Re-render
+}
+
+function closeSurveyPreviewModal() {
+    document.getElementById('survey-preview-modal').classList.remove('visible');
+    currentSurveyRefId = null;
+    currentSurveyQuestions = [];
+}
+
+async function sendSurvey() {
+    // Collect edited questions
+    const editedQuestions = currentSurveyQuestions.map((q, i) => {
+        const textarea = document.getElementById(`sq-${i}`);
+        return {
+            ...q,
+            question_text: textarea ? textarea.value.trim() : q.question_text
+        };
+    }).filter(q => q.question_text);
+    
+    if (editedQuestions.length === 0) {
+        alert('At least one question is required');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/candidates/${candidateId}/references/${currentSurveyRefId}/survey/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ questions: editedQuestions })
+        });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        
+        closeSurveyPreviewModal();
+        loadCandidate();
+        alert('Survey sent successfully!');
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function viewSurveyResults(refId) {
+    const modal = document.getElementById('survey-results-modal');
+    const content = document.getElementById('survey-results-content');
+    modal.classList.add('visible');
+    content.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="spinner" style="margin: 0 auto;"></div></div>';
+    
+    try {
+        const response = await fetch(`/api/candidates/${candidateId}/references/${refId}/survey/results`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        
+        const analysis = data.survey_analysis ? JSON.parse(data.survey_analysis) : {};
+        const scoreClass = data.survey_score >= 70 ? 'high' : data.survey_score >= 40 ? 'medium' : 'low';
+        
+        content.innerHTML = `
+            <div class="score-display" style="text-align: center; margin-bottom: 1.5rem;">
+                <div class="score-value ${scoreClass}" style="font-size: 3rem; font-weight: 700;">${data.survey_score || '--'}</div>
+                <div class="score-label" style="color: var(--text-muted);">Survey Score</div>
+            </div>
+            
+            ${data.survey_summary ? `<div class="summary-box" style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"><div style="font-weight: 600; margin-bottom: 0.5rem;">Summary</div><p>${escapeHtml(data.survey_summary)}</p></div>` : ''}
+            
+            ${data.survey_red_flags?.length ? `<div style="background: var(--danger-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"><div style="font-weight: 600; color: var(--danger); margin-bottom: 0.5rem;">🚩 Red Flags</div>${data.survey_red_flags.map(f => `<p style="margin: 0.25rem 0;">• ${escapeHtml(f)}</p>`).join('')}</div>` : ''}
+            
+            ${analysis.strengths?.length ? `<div style="background: var(--success-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"><div style="font-weight: 600; color: var(--success); margin-bottom: 0.5rem;">✓ Strengths</div>${analysis.strengths.map(s => `<p style="margin: 0.25rem 0;">• ${escapeHtml(s)}</p>`).join('')}</div>` : ''}
+            
+            ${analysis.areas_for_development?.length ? `<div style="background: var(--warning-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"><div style="font-weight: 600; color: var(--warning); margin-bottom: 0.5rem;">⚠️ Areas for Development</div>${analysis.areas_for_development.map(a => `<p style="margin: 0.25rem 0;">• ${escapeHtml(a)}</p>`).join('')}</div>` : ''}
+            
+            <div style="margin-top: 1.5rem;">
+                <div style="font-weight: 600; margin-bottom: 0.75rem;">Question Responses</div>
+                ${data.questions?.map(q => `
+                    <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 0.5rem;">
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem;">${escapeHtml(q.question_text)}</div>
+                        <div style="font-weight: 500;">
+                            ${q.response?.rating ? `<span style="color: var(--accent);">Rating: ${q.response.rating}/5</span>` : ''}
+                            ${q.response?.selected_option ? escapeHtml(q.response.selected_option) : ''}
+                            ${q.response?.text_response ? escapeHtml(q.response.text_response) : ''}
+                            ${!q.response?.rating && !q.response?.selected_option && !q.response?.text_response ? '<span style="color: var(--text-muted);">No response</span>' : ''}
+                        </div>
+                    </div>
+                `).join('') || ''}
+            </div>
+        `;
+    } catch (error) {
+        content.innerHTML = `<p style="color: var(--danger);">Error: ${error.message}</p>`;
+    }
+}
+
+function closeSurveyResultsModal() {
+    document.getElementById('survey-results-modal').classList.remove('visible');
+}
+
+function formatDateTime(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+loadCandidate();
+loadReferenceRequestStatus();
+document.getElementById('schedule-modal').addEventListener('click', e => { if (e.target.id === 'schedule-modal') closeScheduleModal(); });
+document.getElementById('results-modal').addEventListener('click', e => { if (e.target.id === 'results-modal') closeResultsModal(); });
+document.getElementById('edit-modal').addEventListener('click', e => { if (e.target.id === 'edit-modal') closeEditModal(); });
+document.getElementById('survey-preview-modal').addEventListener('click', e => { if (e.target.id === 'survey-preview-modal') closeSurveyPreviewModal(); });
+document.getElementById('survey-results-modal').addEventListener('click', e => { if (e.target.id === 'survey-results-modal') closeSurveyResultsModal(); });
+</script>
+{% endblock %}
