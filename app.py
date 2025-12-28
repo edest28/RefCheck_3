@@ -558,6 +558,7 @@ def add_reference(candidate_id):
         phone=data.get('reference_phone', ''),
         email=data.get('reference_email', ''),
         relationship=data.get('relationship', ''),
+        contact_method=data.get('contact_method', 'call_only'),
         custom_questions=json.dumps(data.get('custom_questions', [])),
         timezone=data.get('timezone', current_user.timezone or 'America/New_York'),
         status='pending'

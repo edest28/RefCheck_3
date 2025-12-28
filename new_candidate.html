@@ -79,7 +79,6 @@
 <div class="steps">
     <div class="step active" id="step1-indicator"><span class="step-number">1</span> Upload Resume</div>
     <div class="step" id="step2-indicator"><span class="step-number">2</span> Add References</div>
-    <div class="step" id="step3-indicator"><span class="step-number">3</span> Start Outreach</div>
 </div>
 
 <!-- Step 1: Upload Resume -->
@@ -156,24 +155,10 @@
     
     <div class="action-footer">
         <button class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
-        <button class="btn btn-primary" id="start-outreach-btn" onclick="startOutreach()">📞 Start Reference Outreach</button>
+        <button class="btn btn-primary" id="save-continue-btn" onclick="saveAndContinue()">Save & View Candidate →</button>
     </div>
 </section>
 
-<!-- Step 3: Confirmation -->
-<section id="step3" class="hidden">
-    <div class="card">
-        <div class="card-body success-card">
-            <div class="success-icon">✓</div>
-            <h2 style="margin-bottom: 0.5rem;">Outreach Started!</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Reference calls are being initiated. You'll be notified of results.</p>
-            <div class="btn-group" style="justify-content: center;">
-                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← Back to Dashboard</a>
-                <a href="" class="btn btn-primary" id="view-candidate-btn">View Candidate Details →</a>
-            </div>
-        </div>
-    </div>
-</section>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -212,10 +197,8 @@
     function goToStep(step) {
         document.getElementById('step1').classList.toggle('hidden', step !== 1);
         document.getElementById('step2').classList.toggle('hidden', step !== 2);
-        document.getElementById('step3').classList.toggle('hidden', step !== 3);
         document.getElementById('step1-indicator').className = `step ${step === 1 ? 'active' : step > 1 ? 'completed' : ''}`;
-        document.getElementById('step2-indicator').className = `step ${step === 2 ? 'active' : step > 2 ? 'completed' : ''}`;
-        document.getElementById('step3-indicator').className = `step ${step === 3 ? 'active' : ''}`;
+        document.getElementById('step2-indicator').className = `step ${step === 2 ? 'active' : ''}`;
     }
     
     async function parseResume() {
@@ -275,8 +258,15 @@
                         <div class="reference-section-title"><span>👥</span> References for this role</div>
                         <div class="reference-list" id="refs-${index}"><p style="color: var(--text-muted); font-size: 0.85rem;">No references added yet</p></div>
                         <div class="add-reference-form">
-                            <input type="text" id="ref-name-${index}" placeholder="Reference name">
-                            <input type="tel" id="ref-phone-${index}" placeholder="+1 555 123 4567">
+                            <input type="text" id="ref-name-${index}" placeholder="Reference name *">
+                            <input type="tel" id="ref-phone-${index}" placeholder="Phone: +1 555 123 4567 *">
+                            <input type="email" id="ref-email-${index}" placeholder="Email (required for survey)">
+                            <input type="text" id="ref-relationship-${index}" placeholder="Relationship (e.g., Manager)">
+                            <select id="ref-contact-method-${index}" style="grid-column: span 2; padding: 0.625rem 0.875rem; font-size: 0.85rem;">
+                                <option value="call_only">📞 Phone Call Only</option>
+                                <option value="survey_only">📧 Email Survey Only</option>
+                                <option value="call_and_survey">📞📧 Both Call + Survey</option>
+                            </select>
                             <button class="btn btn-secondary btn-sm add-reference-btn" onclick="addReference(${index})">+ Add Reference</button>
                         </div>
                         <div class="custom-questions">
@@ -293,25 +283,45 @@
     async function addReference(jobIndex) {
         const name = document.getElementById(`ref-name-${jobIndex}`).value.trim();
         const phone = document.getElementById(`ref-phone-${jobIndex}`).value.trim();
+        const email = document.getElementById(`ref-email-${jobIndex}`).value.trim();
+        const relationship = document.getElementById(`ref-relationship-${jobIndex}`).value.trim();
+        const contactMethod = document.getElementById(`ref-contact-method-${jobIndex}`).value;
         const customQInput = document.getElementById(`custom-q-${jobIndex}`);
         const customQuestions = customQInput.value.trim().split('\n').filter(q => q.trim());
-        
+
         if (!name || !phone) { alert('Please enter both name and phone number'); return; }
-        
+
+        // Validate email is provided if survey method is selected
+        if ((contactMethod === 'survey_only' || contactMethod === 'call_and_survey') && !email) {
+            alert('Email is required when using survey contact method');
+            return;
+        }
+
         try {
             const response = await fetch(`/api/candidates/${candidateId}/references`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reference_name: name, reference_phone: phone, job_index: jobIndex, custom_questions: customQuestions })
+                body: JSON.stringify({
+                    reference_name: name,
+                    reference_phone: phone,
+                    reference_email: email,
+                    relationship: relationship,
+                    contact_method: contactMethod,
+                    job_index: jobIndex,
+                    custom_questions: customQuestions
+                })
             });
             const data = await response.json();
             if (data.error) throw new Error(data.error);
-            
+
             if (!candidateData.references) candidateData.references = [];
             candidateData.references.push(data.reference);
             renderReferences(jobIndex);
             document.getElementById(`ref-name-${jobIndex}`).value = '';
             document.getElementById(`ref-phone-${jobIndex}`).value = '';
+            document.getElementById(`ref-email-${jobIndex}`).value = '';
+            document.getElementById(`ref-relationship-${jobIndex}`).value = '';
+            document.getElementById(`ref-contact-method-${jobIndex}`).value = 'call_only';
         } catch (error) { alert('Error: ' + error.message); }
     }
     
@@ -322,17 +332,25 @@
             return r.job_id === jobId || (!r.job_id && jobIndex === 0);
         });
         const container = document.getElementById(`refs-${jobIndex}`);
-        
+
         if (refs.length === 0) {
             container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No references added yet</p>';
             return;
         }
-        
+
+        const getContactMethodBadge = (method) => {
+            if (method === 'call_only') return '<span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: var(--accent-bg); color: var(--accent); border-radius: 4px; font-weight: 600;">📞 Call</span>';
+            if (method === 'survey_only') return '<span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: var(--success-bg); color: var(--success); border-radius: 4px; font-weight: 600;">📧 Survey</span>';
+            if (method === 'call_and_survey') return '<span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: var(--warning-bg); color: var(--warning); border-radius: 4px; font-weight: 600;">📞📧 Both</span>';
+            return '<span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: var(--bg-tertiary); color: var(--text-muted); border-radius: 4px; font-weight: 600;">📞 Call</span>';
+        };
+
         container.innerHTML = refs.map(ref => `
             <div class="reference-item">
                 <div class="reference-info">
                     <div class="reference-name">${escapeHtml(ref.name)}</div>
-                    <div class="reference-phone">${escapeHtml(ref.phone)}</div>
+                    <div class="reference-phone">${escapeHtml(ref.phone)}${ref.email ? ' • ' + escapeHtml(ref.email) : ''}</div>
+                    <div style="margin-top: 0.25rem;">${getContactMethodBadge(ref.contact_method)}</div>
                 </div>
                 <button class="reference-remove" onclick="removeReference('${ref.id}', ${jobIndex})">×</button>
             </div>
@@ -347,34 +365,33 @@
         } catch (error) { alert('Error: ' + error.message); }
     }
     
-    async function startOutreach() {
+    async function saveAndContinue() {
         const refs = candidateData.references || [];
-        if (refs.length === 0) { alert('Please add at least one reference'); return; }
-        
+        if (refs.length === 0) {
+            if (!confirm('You haven\'t added any references yet. Continue anyway?')) return;
+        }
+
         const smsTemplate = document.getElementById('sms-template').value;
-        await fetch(`/api/candidates/${candidateId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sms_template: smsTemplate })
-        });
-        
-        const btn = document.getElementById('start-outreach-btn');
+        const btn = document.getElementById('save-continue-btn');
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Starting...';
-        
+        btn.innerHTML = '<span class="spinner"></span> Saving...';
+
         try {
-            const response = await fetch(`/api/candidates/${candidateId}/start-outreach`, { method: 'POST' });
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-            
-            document.getElementById('view-candidate-btn').href = `/candidate/${candidateId}`;
-            goToStep(3);
+            await fetch(`/api/candidates/${candidateId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sms_template: smsTemplate })
+            });
+
+            // Navigate to candidate detail page without starting outreach
+            window.location.href = `/candidate/${candidateId}`;
         } catch (error) {
             alert('Error: ' + error.message);
             btn.disabled = false;
-            btn.innerHTML = '📞 Start Reference Outreach';
+            btn.innerHTML = 'Save & View Candidate →';
         }
     }
+
     
     function escapeHtml(text) {
         if (!text) return '';
