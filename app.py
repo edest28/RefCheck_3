@@ -1309,7 +1309,6 @@ def generate_survey_questions_preview():
     job_dates = data.get('job_dates', '')
     responsibilities = data.get('responsibilities', [])
     achievements = data.get('achievements', [])
-    target_position = data.get('target_position', '')
 
     # Get standardized questions (10 questions)
     standardized = []
@@ -1331,7 +1330,7 @@ def generate_survey_questions_preview():
             prior_dates=job_dates,
             prior_responsibilities=responsibilities[:5] if responsibilities else [],
             prior_achievements=achievements[:3] if achievements else [],
-            target_role=target_position,
+            target_role=None,  # Not using target role
             api_key=ANTHROPIC_API_KEY
         )
 
