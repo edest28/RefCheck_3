@@ -64,7 +64,8 @@
     
     .add-reference-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
     .add-reference-form input { padding: 0.625rem 0.875rem; font-size: 0.85rem; }
-    .add-reference-btn { grid-column: span 2; }
+    .add-reference-btn { grid-column: span 2; border: 2px solid var(--accent) !important; color: var(--accent) !important; background: white !important; }
+    .add-reference-btn:hover { background: var(--accent-bg) !important; }
     @media (max-width: 640px) { .add-reference-form { grid-template-columns: 1fr; } .add-reference-btn { grid-column: span 1; } }
     
     .custom-questions { margin-top: 1rem; }
@@ -539,7 +540,11 @@
     let surveyQuestions = [];
 
     async function previewSurvey(jobIndex) {
+        console.log('previewSurvey called for job index:', jobIndex);
+
         const name = document.getElementById(`ref-name-${jobIndex}`).value.trim();
+        console.log('Reference name:', name);
+
         if (!name) {
             alert('Please enter the reference name first');
             return;
@@ -553,29 +558,39 @@
 
         try {
             const job = candidateData.jobs[jobIndex];
+            console.log('Job data:', job);
+
+            const requestBody = {
+                candidate_name: name,
+                job_title: job.title,
+                job_company: job.company,
+                job_dates: job.dates,
+                responsibilities: job.responsibilities || [],
+                achievements: job.achievements || [],
+                target_position: candidateData.position
+            };
+            console.log('Sending request:', requestBody);
 
             // Call API to generate questions (this will generate AI questions)
             const response = await fetch(`/api/generate-survey-questions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    candidate_name: name,
-                    job_title: job.title,
-                    job_company: job.company,
-                    job_dates: job.dates,
-                    responsibilities: job.responsibilities || [],
-                    achievements: job.achievements || [],
-                    target_position: candidateData.position
-                })
+                body: JSON.stringify(requestBody)
             });
 
+            console.log('Response status:', response.status);
             const data = await response.json();
+            console.log('Response data:', data);
+
             if (data.error) throw new Error(data.error);
 
             surveyQuestions = data.questions || [];
+            console.log('Survey questions:', surveyQuestions);
+
             renderSurveyModal();
             document.getElementById('survey-modal').classList.remove('hidden');
         } catch (error) {
+            console.error('Error in previewSurvey:', error);
             alert('Error generating questions: ' + error.message);
         } finally {
             btn.disabled = false;
