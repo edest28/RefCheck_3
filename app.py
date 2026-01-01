@@ -558,7 +558,7 @@ def add_reference(candidate_id):
         phone=data.get('reference_phone', ''),
         email=data.get('reference_email', ''),
         relationship=data.get('relationship', ''),
-        contact_method=data.get('contact_method', 'call_only'),
+        contact_method=data.get('contact_method', 'survey_only'),
         custom_questions=json.dumps(data.get('custom_questions', [])),
         timezone=data.get('timezone', current_user.timezone or 'America/New_York'),
         status='pending'
@@ -1296,6 +1296,64 @@ def submit_references(token):
 # ============================================================================
 # Survey Routes
 # ============================================================================
+
+@app.route('/api/generate-survey-questions', methods=['POST'])
+@api_login_required
+def generate_survey_questions_preview():
+    """Generate survey questions for preview before creating reference."""
+    data = request.json
+
+    candidate_name = data.get('candidate_name', '')
+    job_title = data.get('job_title', '')
+    job_company = data.get('job_company', '')
+    job_dates = data.get('job_dates', '')
+    responsibilities = data.get('responsibilities', [])
+    achievements = data.get('achievements', [])
+    target_position = data.get('target_position', '')
+
+    # Import the functions we need
+    from services import STANDARDIZED_SURVEY_QUESTIONS, generate_ai_survey_questions
+
+    # Get standardized questions (10 questions)
+    standardized = []
+    for idx, q in enumerate(STANDARDIZED_SURVEY_QUESTIONS):
+        standardized.append({
+            'index': idx,
+            'type': 'standardized',
+            'question': q['question'].replace('{candidate_name}', candidate_name),
+            'answer_type': q.get('type', 'text')
+        })
+
+    # Generate AI questions (up to 5 questions)
+    ai_questions = []
+    try:
+        ai_qs = generate_ai_survey_questions(
+            candidate_name=candidate_name,
+            prior_job_title=job_title,
+            prior_company=job_company,
+            prior_dates=job_dates,
+            prior_responsibilities=responsibilities[:5] if responsibilities else [],
+            prior_achievements=achievements[:3] if achievements else [],
+            target_role=target_position,
+            api_key=ANTHROPIC_API_KEY
+        )
+
+        for idx, q in enumerate(ai_qs):
+            ai_questions.append({
+                'index': len(standardized) + idx,
+                'type': 'ai_generated',
+                'question': q,
+                'answer_type': 'text'
+            })
+    except Exception as e:
+        print(f"Error generating AI questions: {e}")
+        # Continue without AI questions if there's an error
+
+    # Combine all questions
+    all_questions = standardized + ai_questions
+
+    return jsonify({'questions': all_questions})
+
 
 @app.route('/api/candidates/<candidate_id>/references/<reference_id>/survey/preview', methods=['GET'])
 @api_login_required

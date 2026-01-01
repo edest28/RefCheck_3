@@ -67,6 +67,28 @@
     
     .success-card { text-align: center; padding: 3rem; }
     .success-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+    /* Modal Styles */
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; display: flex; align-items: center; justify-content: center; }
+    .modal.hidden { display: none; }
+    .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); }
+    .modal-content { position: relative; background: var(--bg-primary); border-radius: 12px; max-width: 700px; max-height: 85vh; width: 90%; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
+    .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .modal-header h3 { font-size: 1.25rem; font-weight: 600; margin: 0; }
+    .modal-close { background: none; border: none; font-size: 2rem; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 0; width: 32px; height: 32px; }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-body { padding: 1.5rem; overflow-y: auto; flex: 1; }
+    .modal-footer { padding: 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 0.75rem; justify-content: flex-end; }
+
+    .question-section { margin-bottom: 2rem; }
+    .question-section:last-child { margin-bottom: 0; }
+    .question-section-title { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .question-item { margin-bottom: 1rem; }
+    .question-item:last-child { margin-bottom: 0; }
+    .question-label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.25rem; }
+    .question-input { width: 100%; padding: 0.625rem 0.875rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; font-family: inherit; }
+    .question-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+    .question-type { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
 </style>
 {% endblock %}
 
@@ -174,6 +196,27 @@
         </div>
     </div>
 </section>
+
+<!-- Survey Preview Modal -->
+<div id="survey-modal" class="modal hidden">
+    <div class="modal-overlay" onclick="closeSurveyModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Survey Questions Preview</h3>
+            <button class="modal-close" onclick="closeSurveyModal()">×</button>
+        </div>
+        <div class="modal-body" id="survey-modal-body">
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                These questions will be sent if you select email survey as the contact method. You can edit any question.
+            </p>
+            <div id="survey-questions-container"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeSurveyModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveSurveyQuestions()">Save Questions</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -274,10 +317,26 @@
                     <div class="reference-section">
                         <div class="reference-section-title"><span>👥</span> References for this role</div>
                         <div class="reference-list" id="refs-${index}"><p style="color: var(--text-muted); font-size: 0.85rem;">No references added yet</p></div>
-                        <div class="add-reference-form">
-                            <input type="text" id="ref-name-${index}" placeholder="Reference name">
-                            <input type="tel" id="ref-phone-${index}" placeholder="+1 555 123 4567">
-                            <button class="btn btn-secondary btn-sm add-reference-btn" onclick="addReference(${index})">+ Add Reference</button>
+                        <div class="add-reference-form" style="grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <input type="text" id="ref-name-${index}" placeholder="Reference name *">
+                            <select id="ref-relationship-${index}">
+                                <option value="">Relationship...</option>
+                                <option value="Manager">Manager</option>
+                                <option value="Direct Supervisor">Direct Supervisor</option>
+                                <option value="Colleague">Colleague</option>
+                                <option value="Direct Report">Direct Report</option>
+                                <option value="Client">Client</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <input type="tel" id="ref-phone-${index}" placeholder="Phone (optional)">
+                            <input type="email" id="ref-email-${index}" placeholder="Email (optional)">
+                            <select id="ref-contact-method-${index}">
+                                <option value="survey_only">Email Survey Only</option>
+                                <option value="call_only">Phone Call Only</option>
+                                <option value="call_and_survey">Both Call & Survey</option>
+                            </select>
+                            <button class="btn btn-secondary btn-sm" onclick="previewSurvey(${index})" id="preview-btn-${index}" disabled>Generate & Preview Survey Questions</button>
+                            <button class="btn btn-secondary btn-sm add-reference-btn" onclick="addReference(${index})" style="grid-column: span 2;">+ Add Reference</button>
                         </div>
                         <div class="custom-questions">
                             <label for="custom-q-${index}">Custom Questions (optional)</label>
@@ -288,30 +347,75 @@
                 </div>
             </div>
         `).join('');
+
+        // Add event listeners to enable preview button when name is filled
+        candidateData.jobs.forEach((job, index) => {
+            const nameInput = document.getElementById(`ref-name-${index}`);
+            nameInput.addEventListener('input', () => {
+                const previewBtn = document.getElementById(`preview-btn-${index}`);
+                previewBtn.disabled = !nameInput.value.trim();
+            });
+        });
     }
     
     async function addReference(jobIndex) {
         const name = document.getElementById(`ref-name-${jobIndex}`).value.trim();
         const phone = document.getElementById(`ref-phone-${jobIndex}`).value.trim();
+        const email = document.getElementById(`ref-email-${jobIndex}`).value.trim();
+        const relationship = document.getElementById(`ref-relationship-${jobIndex}`).value;
+        const contactMethod = document.getElementById(`ref-contact-method-${jobIndex}`).value;
         const customQInput = document.getElementById(`custom-q-${jobIndex}`);
         const customQuestions = customQInput.value.trim().split('\n').filter(q => q.trim());
-        
-        if (!name || !phone) { alert('Please enter both name and phone number'); return; }
-        
+
+        // Validation: name is required
+        if (!name) {
+            alert('Please enter the reference name');
+            return;
+        }
+
+        // Validation: at least phone OR email required
+        if (!phone && !email) {
+            alert('Please provide either a phone number or email address');
+            return;
+        }
+
+        // Validation: contact method must match available contact info
+        if ((contactMethod === 'call_only' || contactMethod === 'call_and_survey') && !phone) {
+            alert('Phone number is required for call-based contact methods');
+            return;
+        }
+        if ((contactMethod === 'survey_only' || contactMethod === 'call_and_survey') && !email) {
+            alert('Email address is required for survey-based contact methods');
+            return;
+        }
+
         try {
             const response = await fetch(`/api/candidates/${candidateId}/references`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reference_name: name, reference_phone: phone, job_index: jobIndex, custom_questions: customQuestions })
+                body: JSON.stringify({
+                    reference_name: name,
+                    reference_phone: phone || null,
+                    reference_email: email || null,
+                    relationship: relationship || null,
+                    contact_method: contactMethod,
+                    job_index: jobIndex,
+                    custom_questions: customQuestions
+                })
             });
             const data = await response.json();
             if (data.error) throw new Error(data.error);
-            
+
             if (!candidateData.references) candidateData.references = [];
             candidateData.references.push(data.reference);
             renderReferences(jobIndex);
+
+            // Clear form
             document.getElementById(`ref-name-${jobIndex}`).value = '';
             document.getElementById(`ref-phone-${jobIndex}`).value = '';
+            document.getElementById(`ref-email-${jobIndex}`).value = '';
+            document.getElementById(`ref-relationship-${jobIndex}`).selectedIndex = 0;
+            document.getElementById(`ref-contact-method-${jobIndex}`).selectedIndex = 0;
         } catch (error) { alert('Error: ' + error.message); }
     }
     
@@ -328,15 +432,26 @@
             return;
         }
         
-        container.innerHTML = refs.map(ref => `
-            <div class="reference-item">
-                <div class="reference-info">
-                    <div class="reference-name">${escapeHtml(ref.name)}</div>
-                    <div class="reference-phone">${escapeHtml(ref.phone)}</div>
+        container.innerHTML = refs.map(ref => {
+            const contactInfo = [];
+            if (ref.phone) contactInfo.push(escapeHtml(ref.phone));
+            if (ref.email) contactInfo.push(escapeHtml(ref.email));
+            const contactMethodLabel = {
+                'call_only': 'Phone Call',
+                'survey_only': 'Email Survey',
+                'call_and_survey': 'Call & Survey'
+            }[ref.contact_method] || 'Email Survey';
+
+            return `
+                <div class="reference-item">
+                    <div class="reference-info">
+                        <div class="reference-name">${escapeHtml(ref.name)}${ref.relationship ? ` (${escapeHtml(ref.relationship)})` : ''}</div>
+                        <div class="reference-phone">${contactInfo.join(' • ')} • ${contactMethodLabel}</div>
+                    </div>
+                    <button class="reference-remove" onclick="removeReference('${ref.id}', ${jobIndex})">×</button>
                 </div>
-                <button class="reference-remove" onclick="removeReference('${ref.id}', ${jobIndex})">×</button>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
     
     async function removeReference(refId, jobIndex) {
@@ -350,23 +465,23 @@
     async function startOutreach() {
         const refs = candidateData.references || [];
         if (refs.length === 0) { alert('Please add at least one reference'); return; }
-        
+
         const smsTemplate = document.getElementById('sms-template').value;
         await fetch(`/api/candidates/${candidateId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sms_template: smsTemplate })
         });
-        
+
         const btn = document.getElementById('start-outreach-btn');
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner"></span> Starting...';
-        
+
         try {
             const response = await fetch(`/api/candidates/${candidateId}/start-outreach`, { method: 'POST' });
             const data = await response.json();
             if (data.error) throw new Error(data.error);
-            
+
             document.getElementById('view-candidate-btn').href = `/candidate/${candidateId}`;
             goToStep(3);
         } catch (error) {
@@ -375,7 +490,120 @@
             btn.innerHTML = '📞 Start Reference Outreach';
         }
     }
-    
+
+    // Survey Preview Modal Functions
+    let currentJobIndex = null;
+    let surveyQuestions = [];
+
+    async function previewSurvey(jobIndex) {
+        const name = document.getElementById(`ref-name-${jobIndex}`).value.trim();
+        if (!name) {
+            alert('Please enter the reference name first');
+            return;
+        }
+
+        currentJobIndex = jobIndex;
+        const btn = document.getElementById(`preview-btn-${jobIndex}`);
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+        try {
+            const job = candidateData.jobs[jobIndex];
+
+            // Call API to generate questions (this will generate AI questions)
+            const response = await fetch(`/api/generate-survey-questions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    candidate_name: name,
+                    job_title: job.title,
+                    job_company: job.company,
+                    job_dates: job.dates,
+                    responsibilities: job.responsibilities || [],
+                    achievements: job.achievements || [],
+                    target_position: candidateData.position
+                })
+            });
+
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            surveyQuestions = data.questions || [];
+            renderSurveyModal();
+            document.getElementById('survey-modal').classList.remove('hidden');
+        } catch (error) {
+            alert('Error generating questions: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    }
+
+    function renderSurveyModal() {
+        const container = document.getElementById('survey-questions-container');
+
+        // Group questions by type
+        const standardQuestions = surveyQuestions.filter(q => q.type === 'standardized');
+        const aiQuestions = surveyQuestions.filter(q => q.type === 'ai_generated');
+
+        let html = '';
+
+        // Standard questions
+        if (standardQuestions.length > 0) {
+            html += '<div class="question-section">';
+            html += '<div class="question-section-title">Standard Questions (' + standardQuestions.length + ')</div>';
+            standardQuestions.forEach((q, idx) => {
+                html += `
+                    <div class="question-item">
+                        <label class="question-label">${idx + 1}. Question</label>
+                        <input type="text" class="question-input" data-index="${q.index}" value="${escapeHtml(q.question)}">
+                        <div class="question-type">${q.answer_type || 'Text response'}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        }
+
+        // AI-generated questions
+        if (aiQuestions.length > 0) {
+            html += '<div class="question-section">';
+            html += '<div class="question-section-title">AI-Generated Questions (' + aiQuestions.length + ')</div>';
+            aiQuestions.forEach((q, idx) => {
+                html += `
+                    <div class="question-item">
+                        <label class="question-label">${idx + 1}. Question</label>
+                        <input type="text" class="question-input" data-index="${q.index}" value="${escapeHtml(q.question)}">
+                        <div class="question-type">${q.answer_type || 'Text response'}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        }
+
+        container.innerHTML = html;
+    }
+
+    function closeSurveyModal() {
+        document.getElementById('survey-modal').classList.add('hidden');
+        currentJobIndex = null;
+        surveyQuestions = [];
+    }
+
+    function saveSurveyQuestions() {
+        // Get all edited question values
+        const inputs = document.querySelectorAll('#survey-questions-container .question-input');
+        const editedQuestions = Array.from(inputs).map((input, idx) => input.value.trim()).filter(q => q);
+
+        if (currentJobIndex !== null) {
+            // Save to custom questions field (will replace all questions as per requirement)
+            const customQTextarea = document.getElementById(`custom-q-${currentJobIndex}`);
+            customQTextarea.value = editedQuestions.join('\n');
+        }
+
+        closeSurveyModal();
+    }
+
     function escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');
