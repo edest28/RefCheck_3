@@ -82,7 +82,7 @@ def parse_resume_with_claude(resume_text, api_key):
     }
 
     payload = {
-        "model": "claude-sonnet-4-20250514",
+        "model": "claude-haiku-4-20250514",  # Haiku is 3x faster and 20x cheaper than Sonnet
         "max_tokens": 4000,
         "messages": [{
             "role": "user",

@@ -274,7 +274,22 @@
 
         const btn = document.getElementById('parse-btn');
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Parsing...';
+
+        // Show progressive loading messages
+        const messages = [
+            'Extracting text from resume...',
+            'Analyzing work experience...',
+            'Identifying key achievements...',
+            'Almost done...'
+        ];
+
+        let messageIndex = 0;
+        btn.innerHTML = `<span class="spinner"></span> ${messages[0]}`;
+
+        const messageInterval = setInterval(() => {
+            messageIndex = (messageIndex + 1) % messages.length;
+            btn.innerHTML = `<span class="spinner"></span> ${messages[messageIndex]}`;
+        }, 2000); // Rotate message every 2 seconds
 
         try {
             const formData = new FormData();
@@ -293,6 +308,7 @@
         } catch (error) {
             alert('Error: ' + error.message);
         } finally {
+            clearInterval(messageInterval);
             btn.disabled = false;
             btn.innerHTML = 'Parse Resume →';
         }
