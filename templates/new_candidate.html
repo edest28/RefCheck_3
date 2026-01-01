@@ -118,15 +118,9 @@
         <div class="card-body">
             <div class="card-title"><span class="card-icon">📄</span> Candidate Information</div>
             
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="candidate-name">Candidate Name (optional)</label>
-                    <input type="text" id="candidate-name" placeholder="Will be extracted from resume">
-                </div>
-                <div class="form-group">
-                    <label for="position">Position Applied For *</label>
-                    <input type="text" id="position" placeholder="e.g., Senior Software Engineer" required>
-                </div>
+            <div class="form-group">
+                <label for="candidate-name">Candidate Name (optional)</label>
+                <input type="text" id="candidate-name" placeholder="Will be extracted from resume">
             </div>
             
             <div class="form-group">
@@ -158,7 +152,6 @@
             <div class="card-title">
                 <span class="card-icon">👤</span>
                 <span id="candidate-display-name">Candidate Name</span>
-                <span style="font-weight: 400; color: var(--text-muted); font-size: 0.9rem; margin-left: auto;" id="position-display"></span>
             </div>
             <p id="candidate-summary" style="color: var(--text-secondary); font-size: 0.9rem;"></p>
         </div>
@@ -274,28 +267,25 @@
     }
     
     async function parseResume() {
-        const position = document.getElementById('position').value.trim();
         const candidateName = document.getElementById('candidate-name').value.trim();
         const smsTemplate = document.getElementById('sms-template').value;
-        
-        if (!position) { alert('Please enter the position applied for'); return; }
+
         if (!selectedFile) { alert('Please upload a resume'); return; }
-        
+
         const btn = document.getElementById('parse-btn');
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner"></span> Parsing...';
-        
+
         try {
             const formData = new FormData();
             formData.append('file', selectedFile);
-            formData.append('position', position);
             formData.append('sms_template', smsTemplate);
             if (candidateName) formData.append('candidate_name', candidateName);
-            
+
             const response = await fetch('/api/candidates', { method: 'POST', body: formData });
             const data = await response.json();
             if (data.error) throw new Error(data.error);
-            
+
             candidateId = data.candidate_id;
             candidateData = data.candidate;
             renderStep2();
@@ -310,7 +300,6 @@
     
     function renderStep2() {
         document.getElementById('candidate-display-name').textContent = candidateData.name;
-        document.getElementById('position-display').textContent = candidateData.position;
         document.getElementById('candidate-summary').textContent = candidateData.summary || '';
         
         const container = document.getElementById('jobs-list');
@@ -546,6 +535,7 @@
     // Survey Preview Modal Functions
     let currentJobIndex = null;
     let surveyQuestions = [];
+    let cachedQuestions = {}; // Cache questions per job to avoid regenerating
 
     async function previewSurvey(jobIndex) {
         console.log('previewSurvey called for job index:', jobIndex);
@@ -559,6 +549,17 @@
         }
 
         currentJobIndex = jobIndex;
+
+        // Check if we have cached questions for this job
+        if (cachedQuestions[jobIndex]) {
+            console.log('Using cached questions for job', jobIndex);
+            surveyQuestions = cachedQuestions[jobIndex];
+            renderSurveyModal();
+            document.getElementById('survey-modal').classList.remove('hidden');
+            return;
+        }
+
+        // Otherwise generate new questions
         const btn = document.getElementById(`preview-btn-${jobIndex}`);
         const originalText = btn.textContent;
         btn.disabled = true;
@@ -574,8 +575,7 @@
                 job_company: job.company,
                 job_dates: job.dates,
                 responsibilities: job.responsibilities || [],
-                achievements: job.achievements || [],
-                target_position: candidateData.position
+                achievements: job.achievements || []
             };
             console.log('Sending request:', requestBody);
 
@@ -594,7 +594,8 @@
             if (data.error) throw new Error(data.error);
 
             surveyQuestions = data.questions || [];
-            console.log('Survey questions:', surveyQuestions);
+            cachedQuestions[jobIndex] = surveyQuestions; // Cache for this job
+            console.log('Survey questions generated and cached:', surveyQuestions);
 
             renderSurveyModal();
             document.getElementById('survey-modal').classList.remove('hidden');
@@ -663,6 +664,14 @@
         const editedQuestions = Array.from(inputs).map((input, idx) => input.value.trim()).filter(q => q);
 
         if (currentJobIndex !== null) {
+            // Update cached questions with edited values
+            surveyQuestions.forEach((q, idx) => {
+                if (inputs[idx]) {
+                    q.question = inputs[idx].value.trim();
+                }
+            });
+            cachedQuestions[currentJobIndex] = [...surveyQuestions];
+
             // Save to custom questions field (will replace all questions as per requirement)
             const customQTextarea = document.getElementById(`custom-q-${currentJobIndex}`);
             customQTextarea.value = editedQuestions.join('\n');
