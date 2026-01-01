@@ -405,6 +405,7 @@
             const response = await fetch(`/api/candidates/${candidateId}/references`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
                 body: JSON.stringify({
                     reference_name: name,
                     reference_phone: phone || null,
@@ -485,7 +486,10 @@
     
     async function removeReference(refId, jobIndex) {
         try {
-            await fetch(`/api/candidates/${candidateId}/references/${refId}`, { method: 'DELETE' });
+            await fetch(`/api/candidates/${candidateId}/references/${refId}`, {
+                method: 'DELETE',
+                credentials: 'same-origin'
+            });
             candidateData.references = candidateData.references.filter(r => r.id !== refId);
             renderReferences(jobIndex);
         } catch (error) { alert('Error: ' + error.message); }
@@ -497,6 +501,7 @@
         await fetch(`/api/candidates/${candidateId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
             body: JSON.stringify({ sms_template: smsTemplate })
         });
 
@@ -521,7 +526,10 @@
         btn.innerHTML = '<span class="spinner"></span> Starting...';
 
         try {
-            const response = await fetch(`/api/candidates/${candidateId}/start-outreach`, { method: 'POST' });
+            const response = await fetch(`/api/candidates/${candidateId}/start-outreach`, {
+                method: 'POST',
+                credentials: 'same-origin'
+            });
             const data = await response.json();
             if (data.error) throw new Error(data.error);
 
@@ -575,6 +583,7 @@
             const response = await fetch(`/api/generate-survey-questions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
                 body: JSON.stringify(requestBody)
             });
 
