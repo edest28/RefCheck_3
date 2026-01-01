@@ -26,7 +26,7 @@ from services import (
     get_survey_questions_for_reference, analyze_survey_responses, send_survey_email, send_survey_confirmation_email,
     send_callback_request_sms, parse_callback_time_with_claude, send_callback_confirmation_sms,
     send_callback_final_confirmation_sms, send_timezone_clarification_sms, add_to_sms_conversation,
-    ROLE_CATEGORIES
+    ROLE_CATEGORIES, STANDARDIZED_SURVEY_QUESTIONS, generate_ai_survey_questions
 )
 
 load_dotenv()
@@ -1310,9 +1310,6 @@ def generate_survey_questions_preview():
     responsibilities = data.get('responsibilities', [])
     achievements = data.get('achievements', [])
     target_position = data.get('target_position', '')
-
-    # Import the functions we need
-    from services import STANDARDIZED_SURVEY_QUESTIONS, generate_ai_survey_questions
 
     # Get standardized questions (10 questions)
     standardized = []

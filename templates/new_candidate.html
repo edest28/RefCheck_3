@@ -178,20 +178,24 @@
     
     <div class="action-footer">
         <button class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
-        <button class="btn btn-primary" id="start-outreach-btn" onclick="startOutreach()">📞 Start Reference Outreach</button>
+        <button class="btn btn-primary" onclick="continueToStep3()">Continue</button>
     </div>
 </section>
 
-<!-- Step 3: Confirmation -->
+<!-- Step 3: Ready to Start -->
 <section id="step3" class="hidden">
     <div class="card">
-        <div class="card-body success-card">
-            <div class="success-icon">✓</div>
-            <h2 style="margin-bottom: 0.5rem;">Outreach Started!</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Reference calls are being initiated. You'll be notified of results.</p>
-            <div class="btn-group" style="justify-content: center;">
+        <div class="card-body">
+            <div class="card-title">Ready to Begin Reference Checks</div>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Your candidate has been saved with <span id="ref-count">0</span> reference(s).
+                You can start outreach now or come back later to manage references.
+            </p>
+
+            <div class="btn-group">
                 <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← Back to Dashboard</a>
-                <a href="" class="btn btn-primary" id="view-candidate-btn">View Candidate Details →</a>
+                <a href="" class="btn btn-secondary" id="view-candidate-link">View Candidate</a>
+                <button class="btn btn-primary" id="start-outreach-btn" onclick="startOutreach()">Start Reference Outreach</button>
             </div>
         </div>
     </div>
@@ -462,16 +466,30 @@
         } catch (error) { alert('Error: ' + error.message); }
     }
     
-    async function startOutreach() {
-        const refs = candidateData.references || [];
-        if (refs.length === 0) { alert('Please add at least one reference'); return; }
-
+    async function continueToStep3() {
+        // Save SMS template
         const smsTemplate = document.getElementById('sms-template').value;
         await fetch(`/api/candidates/${candidateId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sms_template: smsTemplate })
         });
+
+        // Update step 3 with reference count and links
+        const refCount = (candidateData.references || []).length;
+        document.getElementById('ref-count').textContent = refCount;
+        document.getElementById('view-candidate-link').href = `/candidate/${candidateId}`;
+
+        // Go to step 3 without starting outreach
+        goToStep(3);
+    }
+
+    async function startOutreach() {
+        const refs = candidateData.references || [];
+        if (refs.length === 0) {
+            alert('Please add at least one reference before starting outreach');
+            return;
+        }
 
         const btn = document.getElementById('start-outreach-btn');
         btn.disabled = true;
@@ -482,12 +500,13 @@
             const data = await response.json();
             if (data.error) throw new Error(data.error);
 
-            document.getElementById('view-candidate-btn').href = `/candidate/${candidateId}`;
-            goToStep(3);
+            // Show success and redirect to candidate page
+            alert('Reference outreach started! Redirecting to candidate details...');
+            window.location.href = `/candidate/${candidateId}`;
         } catch (error) {
             alert('Error: ' + error.message);
             btn.disabled = false;
-            btn.innerHTML = '📞 Start Reference Outreach';
+            btn.innerHTML = 'Start Reference Outreach';
         }
     }
 
