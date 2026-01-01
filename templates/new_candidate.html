@@ -49,11 +49,18 @@
     .reference-section { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
     .reference-section-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
     .reference-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem; }
-    .reference-item { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border); }
+    .reference-item { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border); animation: slideIn 0.3s ease-out; }
+    .reference-item.success { background: var(--success-bg); border-color: var(--success); }
+    .reference-success-icon { color: var(--success); font-size: 1.25rem; }
     .reference-info { flex: 1; }
     .reference-name { font-weight: 500; font-size: 0.9rem; }
     .reference-phone { font-size: 0.8rem; color: var(--text-muted); }
     .reference-remove { background: none; border: none; color: var(--danger); cursor: pointer; padding: 0.25rem; }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
     
     .add-reference-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
     .add-reference-form input { padding: 0.625rem 0.875rem; font-size: 0.85rem; }
@@ -178,20 +185,24 @@
     
     <div class="action-footer">
         <button class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
-        <button class="btn btn-primary" id="start-outreach-btn" onclick="startOutreach()">📞 Start Reference Outreach</button>
+        <button class="btn btn-primary" onclick="continueToStep3()">Continue</button>
     </div>
 </section>
 
-<!-- Step 3: Confirmation -->
+<!-- Step 3: Ready to Start -->
 <section id="step3" class="hidden">
     <div class="card">
-        <div class="card-body success-card">
-            <div class="success-icon">✓</div>
-            <h2 style="margin-bottom: 0.5rem;">Outreach Started!</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Reference calls are being initiated. You'll be notified of results.</p>
-            <div class="btn-group" style="justify-content: center;">
+        <div class="card-body">
+            <div class="card-title">Ready to Begin Reference Checks</div>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Your candidate has been saved with <span id="ref-count">0</span> reference(s).
+                You can start outreach now or come back later to manage references.
+            </p>
+
+            <div class="btn-group">
                 <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← Back to Dashboard</a>
-                <a href="" class="btn btn-primary" id="view-candidate-btn">View Candidate Details →</a>
+                <a href="" class="btn btn-secondary" id="view-candidate-link">View Candidate</a>
+                <button class="btn btn-primary" id="start-outreach-btn" onclick="startOutreach()">Start Reference Outreach</button>
             </div>
         </div>
     </div>
@@ -408,6 +419,11 @@
 
             if (!candidateData.references) candidateData.references = [];
             candidateData.references.push(data.reference);
+
+            // Mark this reference as the last added one for success highlight
+            const container = document.getElementById(`refs-${jobIndex}`);
+            container.dataset.lastAddedId = data.reference.id;
+
             renderReferences(jobIndex);
 
             // Clear form
@@ -432,7 +448,7 @@
             return;
         }
         
-        container.innerHTML = refs.map(ref => {
+        container.innerHTML = refs.map((ref, idx) => {
             const contactInfo = [];
             if (ref.phone) contactInfo.push(escapeHtml(ref.phone));
             if (ref.email) contactInfo.push(escapeHtml(ref.email));
@@ -442,8 +458,12 @@
                 'call_and_survey': 'Call & Survey'
             }[ref.contact_method] || 'Email Survey';
 
+            const isNew = ref.id === container.dataset.lastAddedId;
+            const successClass = isNew ? 'success' : '';
+
             return `
-                <div class="reference-item">
+                <div class="reference-item ${successClass}" id="ref-${ref.id}">
+                    <span class="reference-success-icon">✓</span>
                     <div class="reference-info">
                         <div class="reference-name">${escapeHtml(ref.name)}${ref.relationship ? ` (${escapeHtml(ref.relationship)})` : ''}</div>
                         <div class="reference-phone">${contactInfo.join(' • ')} • ${contactMethodLabel}</div>
@@ -452,6 +472,14 @@
                 </div>
             `;
         }).join('');
+
+        // Remove success highlight after animation
+        setTimeout(() => {
+            container.querySelectorAll('.reference-item.success').forEach(el => {
+                el.classList.remove('success');
+            });
+            container.dataset.lastAddedId = '';
+        }, 2000);
     }
     
     async function removeReference(refId, jobIndex) {
@@ -462,16 +490,30 @@
         } catch (error) { alert('Error: ' + error.message); }
     }
     
-    async function startOutreach() {
-        const refs = candidateData.references || [];
-        if (refs.length === 0) { alert('Please add at least one reference'); return; }
-
+    async function continueToStep3() {
+        // Save SMS template
         const smsTemplate = document.getElementById('sms-template').value;
         await fetch(`/api/candidates/${candidateId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sms_template: smsTemplate })
         });
+
+        // Update step 3 with reference count and links
+        const refCount = (candidateData.references || []).length;
+        document.getElementById('ref-count').textContent = refCount;
+        document.getElementById('view-candidate-link').href = `/candidate/${candidateId}`;
+
+        // Go to step 3 without starting outreach
+        goToStep(3);
+    }
+
+    async function startOutreach() {
+        const refs = candidateData.references || [];
+        if (refs.length === 0) {
+            alert('Please add at least one reference before starting outreach');
+            return;
+        }
 
         const btn = document.getElementById('start-outreach-btn');
         btn.disabled = true;
@@ -482,12 +524,13 @@
             const data = await response.json();
             if (data.error) throw new Error(data.error);
 
-            document.getElementById('view-candidate-btn').href = `/candidate/${candidateId}`;
-            goToStep(3);
+            // Show success and redirect to candidate page
+            alert('Reference outreach started! Redirecting to candidate details...');
+            window.location.href = `/candidate/${candidateId}`;
         } catch (error) {
             alert('Error: ' + error.message);
             btn.disabled = false;
-            btn.innerHTML = '📞 Start Reference Outreach';
+            btn.innerHTML = 'Start Reference Outreach';
         }
     }
 
