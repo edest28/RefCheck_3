@@ -156,7 +156,6 @@
         <div class="candidate-avatar" id="candidate-avatar">?</div>
         <div class="candidate-info">
             <h1 class="candidate-name" id="candidate-name">Loading...</h1>
-            <p class="candidate-position" id="candidate-position"></p>
             <div class="candidate-meta">
                 <span class="meta-item" id="candidate-email"></span>
                 <span class="meta-item" id="candidate-phone"></span>
@@ -447,7 +446,6 @@ async function saveTargetRole() {
 function renderCandidate() {
     document.getElementById('candidate-name').textContent = candidateData.name;
     document.getElementById('candidate-avatar').textContent = candidateData.name.charAt(0).toUpperCase();
-    document.getElementById('candidate-position').textContent = candidateData.position || 'Position not specified';
     if (candidateData.email) document.getElementById('candidate-email').innerHTML = `📧 ${candidateData.email}`;
     if (candidateData.phone) document.getElementById('candidate-phone').innerHTML = `📱 ${candidateData.phone}`;
     
