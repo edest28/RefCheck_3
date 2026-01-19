@@ -150,7 +150,11 @@ def register():
             db.session.add(user)
             db.session.commit()
 
-            log_audit(user.id, 'user_registered')
+            # Try to log audit, but don't fail registration if it fails
+            try:
+                log_audit(user.id, 'user_registered')
+            except Exception as audit_error:
+                print(f"Audit log error (non-critical): {audit_error}")
 
             login_user(user)
             flash('Welcome to RefCheck AI!', 'success')
@@ -158,9 +162,14 @@ def register():
         except Exception as e:
             db.session.rollback()
             import traceback
-            print(f"Registration error: {e}")
+            error_msg = str(e)
+            print(f"Registration error: {error_msg}")
             print(traceback.format_exc())
-            flash('An error occurred while creating your account. Please try again.', 'error')
+            # Show more specific error message if possible
+            if 'UNIQUE constraint' in error_msg or 'duplicate' in error_msg.lower():
+                flash('An account with this email already exists.', 'error')
+            else:
+                flash(f'An error occurred while creating your account: {error_msg}', 'error')
             return render_template('register.html')
 
     return render_template('register.html')
