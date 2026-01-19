@@ -137,23 +137,31 @@ def register():
             return render_template('register.html')
 
         # Create user
-        user = User(
-            email=email,
-            first_name=first_name,
-            last_name=last_name,
-            company_name=company_name,
-            sms_template=DEFAULT_SMS_TEMPLATE
-        )
-        user.set_password(password)
+        try:
+            user = User(
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+                company_name=company_name,
+                sms_template=DEFAULT_SMS_TEMPLATE
+            )
+            user.set_password(password)
 
-        db.session.add(user)
-        db.session.commit()
+            db.session.add(user)
+            db.session.commit()
 
-        log_audit(user.id, 'user_registered')
+            log_audit(user.id, 'user_registered')
 
-        login_user(user)
-        flash('Welcome to RefCheck AI!', 'success')
-        return redirect(url_for('dashboard'))
+            login_user(user)
+            flash('Welcome to RefCheck AI!', 'success')
+            return redirect(url_for('dashboard'))
+        except Exception as e:
+            db.session.rollback()
+            import traceback
+            print(f"Registration error: {e}")
+            print(traceback.format_exc())
+            flash('An error occurred while creating your account. Please try again.', 'error')
+            return render_template('register.html')
 
     return render_template('register.html')
 

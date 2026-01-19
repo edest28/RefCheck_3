@@ -73,7 +73,7 @@
     .custom-questions { margin-top: 1rem; }
     .custom-questions textarea { min-height: 80px; font-size: 0.85rem; }
     
-    .action-footer { position: sticky; bottom: 0; background: var(--bg-primary); border-top: 1.5px solid var(--border); padding: 1.25rem 2rem; margin: 2rem -2rem -2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05); }
+    .action-footer { position: sticky; bottom: 0; background: var(--bg-primary); border-top: 1.5px solid var(--border); padding: 1.25rem 2rem; margin: 2rem -2rem -2rem; display: flex; justify-content: space-between; align-items: center; }
 
     .success-card { text-align: center; padding: 3rem; }
     .success-icon { font-size: 3.5rem; margin-bottom: 1.25rem; }
@@ -82,7 +82,7 @@
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; display: flex; align-items: center; justify-content: center; }
     .modal.hidden { display: none; }
     .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(2px); }
-    .modal-content { position: relative; background: var(--bg-primary); border-radius: 12px; max-width: 700px; max-height: 85vh; width: 90%; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
+    .modal-content { position: relative; background: var(--bg-primary); border-radius: 12px; max-width: 700px; max-height: 85vh; width: 90%; display: flex; flex-direction: column; }
     .modal-header { padding: 1.75rem 2rem; border-bottom: 1.5px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; }
     .modal-header h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
     .modal-close { background: none; border: none; font-size: 1.75rem; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 0; width: 36px; height: 36px; border-radius: 6px; transition: all 0.2s; }
@@ -98,7 +98,7 @@
     .question-label { display: block; font-size: 0.8125rem; font-weight: 500; color: var(--text-primary); margin-bottom: 0.5rem; letter-spacing: -0.01em; }
     .question-input { width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9375rem; font-family: inherit; transition: all 0.2s; }
     .question-input:hover { border-color: var(--border-focus); }
-    .question-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+    .question-input:focus { outline: none; border-color: var(--accent); }
     .question-type { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.375rem; }
 </style>
 {% endblock %}
@@ -119,7 +119,7 @@
 <section id="step1">
     <div class="card">
         <div class="card-body">
-            <div class="card-title"><span class="card-icon">📄</span> Candidate Information</div>
+            <div class="card-title"><span class="card-icon"></span> Candidate Information</div>
             
             <div class="form-group">
                 <label for="candidate-name">Candidate Name (optional)</label>
@@ -129,13 +129,13 @@
             <div class="form-group">
                 <label>Resume Upload *</label>
                 <div class="file-upload" id="drop-zone" onclick="document.getElementById('file-input').click()">
-                    <div class="file-upload-icon">📁</div>
+                    <div class="file-upload-icon"></div>
                     <p class="file-upload-text">Drop resume here or click to browse</p>
                     <p class="hint">PDF, DOC, DOCX, or TXT (max 16MB)</p>
                 </div>
                 <input type="file" id="file-input" class="file-input" accept=".pdf,.doc,.docx,.txt">
                 <div id="selected-file" class="selected-file hidden">
-                    <span>📄</span>
+                    <span></span>
                     <span class="selected-file-name" id="selected-file-name"></span>
                     <button class="selected-file-remove" onclick="clearFile()">×</button>
                 </div>
@@ -153,7 +153,7 @@
     <div class="card mb-2">
         <div class="card-body">
             <div class="card-title">
-                <span class="card-icon">👤</span>
+                <span class="card-icon"></span>
                 <span id="candidate-display-name">Candidate Name</span>
             </div>
             <p id="candidate-summary" style="color: var(--text-secondary); font-size: 0.9rem;"></p>
@@ -162,7 +162,7 @@
     
     <div class="card mb-2">
         <div class="card-body">
-            <div class="card-title"><span class="card-icon">💼</span> Work History & References</div>
+            <div class="card-title"><span class="card-icon"></span> Work History & References</div>
             <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Add at least one reference for each role. You can also add custom questions.</p>
             <div class="jobs-list" id="jobs-list"></div>
         </div>
@@ -170,7 +170,7 @@
     
     <div class="card">
         <div class="card-body">
-            <div class="card-title"><span class="card-icon">💬</span> SMS Follow-up Template</div>
+            <div class="card-title"><span class="card-icon"></span> SMS Follow-up Template</div>
             <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">If a reference doesn't answer, this message will be sent via SMS.</p>
             <div class="form-group">
                 <label for="sms-template">SMS Message</label>
@@ -332,10 +332,10 @@
                     <div class="job-dates">${escapeHtml(job.dates)}</div>
                 </div>
                 <div class="job-body">
-                    ${job.responsibilities?.length ? `<div class="job-section"><div class="job-section-title">Responsibilities</div>${job.responsibilities.map(r => `<div class="job-item"><span class="job-item-icon resp">○</span><span>${escapeHtml(r)}</span></div>`).join('')}</div>` : ''}
-                    ${job.achievements?.length ? `<div class="job-section"><div class="job-section-title">Achievements</div>${job.achievements.map(a => `<div class="job-item"><span class="job-item-icon ach">★</span><span>${escapeHtml(a)}</span></div>`).join('')}</div>` : ''}
+                    ${job.responsibilities?.length ? `<div class="job-section"><div class="job-section-title">Responsibilities</div>${job.responsibilities.map(r => `<div class="job-item"><span class="job-item-icon resp"></span><span>${escapeHtml(r)}</span></div>`).join('')}</div>` : ''}
+                    ${job.achievements?.length ? `<div class="job-section"><div class="job-section-title">Achievements</div>${job.achievements.map(a => `<div class="job-item"><span class="job-item-icon ach"></span><span>${escapeHtml(a)}</span></div>`).join('')}</div>` : ''}
                     <div class="reference-section">
-                        <div class="reference-section-title"><span>👥</span> References for this role</div>
+                        <div class="reference-section-title"><span></span> References for this role</div>
                         <div class="reference-list" id="refs-${index}"><p style="color: var(--text-muted); font-size: 0.85rem;">No references added yet</p></div>
                         <div class="add-reference-form" style="grid-template-columns: 1fr 1fr; gap: 0.75rem;">
                             <input type="text" id="ref-name-${index}" placeholder="Reference name *">
@@ -473,7 +473,7 @@
 
             return `
                 <div class="reference-item ${successClass}" id="ref-${ref.id}">
-                    <span class="reference-success-icon">✓</span>
+                    <span class="reference-success-icon"></span>
                     <div class="reference-info">
                         <div class="reference-name">${escapeHtml(ref.name)}${ref.relationship ? ` (${escapeHtml(ref.relationship)})` : ''}</div>
                         <div class="reference-phone">${contactInfo.join(' • ')} • ${contactMethodLabel}</div>

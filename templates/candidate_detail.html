@@ -85,7 +85,7 @@
     .job-section-title { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.075em; color: var(--text-muted); margin-bottom: 0.625rem; font-weight: 600; }
     .job-item { font-size: 0.9375rem; color: var(--text-secondary); padding: 0.375rem 0; padding-left: 1.125rem; position: relative; line-height: 1.6; }
     .job-item::before { content: "•"; position: absolute; left: 0; color: var(--accent); }
-    .job-item.achievement::before { content: "★"; color: var(--success); }
+    .job-item.achievement::before { content: ""; color: var(--success); }
     
     .references-section { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
     .references-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
@@ -122,19 +122,19 @@
     .red-flags { background: var(--danger-bg); border: 1px solid rgba(220,38,38,0.2); border-radius: 8px; padding: 1rem; margin-top: 1rem; }
     .red-flags-title { font-size: 0.85rem; font-weight: 600; color: var(--danger); margin-bottom: 0.5rem; }
     .red-flag-item { font-size: 0.85rem; color: var(--text-secondary); padding: 0.25rem 0 0.25rem 1rem; position: relative; }
-    .red-flag-item::before { content: "⚠"; position: absolute; left: 0; color: var(--danger); }
+    .red-flag-item::before { content: ""; position: absolute; left: 0; color: var(--danger); }
     
     .discrepancies { background: #fef3c7; border: 1px solid rgba(217,119,6,0.3); border-radius: 8px; padding: 1rem; margin-top: 1rem; }
     .discrepancies-title { font-size: 0.85rem; font-weight: 600; color: #d97706; margin-bottom: 0.5rem; }
     .discrepancy-item { font-size: 0.85rem; color: #92400e; padding: 0.25rem 0 0.25rem 1rem; position: relative; }
-    .discrepancy-item::before { content: "⚠"; position: absolute; left: 0; }
+    .discrepancy-item::before { content: ""; position: absolute; left: 0; }
     
     .summary-box { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; font-size: 0.9rem; color: var(--text-secondary); margin-top: 1rem; }
     .summary-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600; }
     
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.2s; }
     .modal-overlay.visible { opacity: 1; visibility: visible; }
-    .modal { background: var(--bg-primary); border-radius: 12px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
+    .modal { background: var(--bg-primary); border-radius: 12px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; }
     .modal-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
     .modal-title { font-weight: 600; }
     .modal-close { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; }
@@ -163,16 +163,16 @@
         </div>
         <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
             <div class="signal-badge gray" id="signal-badge"><span>No Data</span></div>
-            <button class="btn btn-secondary btn-sm" id="resume-btn" onclick="viewResume()" style="white-space: nowrap;">📄 Resume</button>
-            <button class="btn btn-secondary btn-sm" id="archive-btn" onclick="toggleArchive()" style="white-space: nowrap;">📦 Archive</button>
-            <button class="btn btn-secondary btn-sm" onclick="deleteCandidate()" style="white-space: nowrap; color: var(--danger);">🗑️ Delete</button>
+            <button class="btn btn-secondary btn-sm" id="resume-btn" onclick="viewResume()" style="white-space: nowrap;">Resume</button>
+            <button class="btn btn-secondary btn-sm" id="archive-btn" onclick="toggleArchive()" style="white-space: nowrap;">Archive</button>
+            <button class="btn btn-secondary btn-sm" onclick="deleteCandidate()" style="white-space: nowrap; color: var(--danger);">Delete</button>
         </div>
     </div>
     
     <!-- Target Role Card -->
     <div class="card" style="margin-bottom: 1rem;">
         <div class="card-header" style="cursor: pointer;" onclick="toggleTargetRoleCard()">
-            <span>🎯 Target Role <span id="target-role-summary" style="font-weight: 400; color: var(--text-muted); font-size: 0.85rem;"></span></span>
+            <span>Target Role <span id="target-role-summary" style="font-weight: 400; color: var(--text-muted); font-size: 0.85rem;"></span></span>
             <span id="target-role-toggle">▼</span>
         </div>
         <div class="card-body" id="target-role-body" style="display: none;">
@@ -191,9 +191,9 @@
     </div>
     
     <div class="tabs">
-        <button class="tab active" onclick="showTab('references')">📞 References</button>
-        <button class="tab" onclick="showTab('jobs')">💼 Work History</button>
-        <button class="tab" onclick="showTab('summary')">📊 Summary</button>
+        <button class="tab active" onclick="showTab('references')">References</button>
+        <button class="tab" onclick="showTab('jobs')">Work History</button>
+        <button class="tab" onclick="showTab('summary')">Summary</button>
     </div>
     
     <div class="tab-content active" id="tab-references">
@@ -201,7 +201,7 @@
             <div>
                 <div class="card">
                     <div class="card-header">
-                        <span>📞 All References</span>
+                        <span>All References</span>
                         <span id="progress-text" style="font-weight: 400; color: var(--text-muted); font-size: 0.85rem;">0 of 0 completed</span>
                     </div>
                     <div class="card-body">
@@ -211,17 +211,17 @@
             </div>
             <div>
                 <div class="card" style="margin-bottom: 1rem;">
-                    <div class="card-header">📧 Request References from Candidate</div>
+                    <div class="card-header">Request References from Candidate</div>
                     <div class="card-body">
                         <div id="ref-request-status" style="margin-bottom: 0.75rem;"></div>
-                        <button class="btn btn-secondary" style="width: 100%;" onclick="sendReferenceRequest()" id="request-refs-btn">📧 Send Request Email</button>
+                        <button class="btn btn-secondary" style="width: 100%;" onclick="sendReferenceRequest()" id="request-refs-btn">Send Request Email</button>
                     </div>
                 </div>
                 <div class="card">
-                    <div class="card-header">⚡ Quick Actions</div>
+                    <div class="card-header">Quick Actions</div>
                     <div class="card-body">
-                        <button class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;" onclick="callAllPending()">📞 Call All Pending</button>
-                        <button class="btn btn-secondary" style="width: 100%;" onclick="sendAllSMS()">💬 Send SMS to Unanswered</button>
+                        <button class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;" onclick="callAllPending()">Call All Pending</button>
+                        <button class="btn btn-secondary" style="width: 100%;" onclick="sendAllSMS()">Send SMS to Unanswered</button>
                     </div>
                 </div>
             </div>
@@ -235,19 +235,19 @@
     <div class="tab-content" id="tab-summary">
         <div class="summary-grid">
             <div class="card">
-                <div class="card-header">📊 Overall Score</div>
+                <div class="card-header">Overall Score</div>
                 <div class="card-body" id="summary-score-section">
                     <p style="color: var(--text-muted); font-size: 0.9rem;">Complete reference checks to see summary.</p>
                 </div>
             </div>
             <div class="card">
-                <div class="card-header">🎯 Skills & Performance Radar</div>
+                <div class="card-header">Skills & Performance Radar</div>
                 <div class="card-body" style="display: flex; justify-content: center; align-items: center; min-height: 280px;">
                     <canvas id="radar-chart" width="280" height="280" style="max-width: 100%;"></canvas>
                 </div>
             </div>
             <div class="card">
-                <div class="card-header">✅ Verification Status</div>
+                <div class="card-header">Verification Status</div>
                 <div class="card-body" id="verification-status-section"></div>
             </div>
             <div class="card">
@@ -259,16 +259,16 @@
         </div>
         <div class="summary-bottom-grid">
             <div class="card">
-                <div class="card-header">✨ Positive Signals</div>
+                <div class="card-header">Positive Signals</div>
                 <div class="card-body" id="positive-signals-section"></div>
             </div>
             <div class="card">
-                <div class="card-header">⚠️ Discrepancies & Red Flags</div>
+                <div class="card-header">Discrepancies & Red Flags</div>
                 <div class="card-body" id="concerns-section"></div>
             </div>
         </div>
         <div class="card" style="margin-top: 1rem;">
-            <div class="card-header">📝 Reference Summaries</div>
+            <div class="card-header">Reference Summaries</div>
             <div class="card-body" id="reference-summaries-section"></div>
         </div>
     </div>
@@ -446,8 +446,8 @@ async function saveTargetRole() {
 function renderCandidate() {
     document.getElementById('candidate-name').textContent = candidateData.name;
     document.getElementById('candidate-avatar').textContent = candidateData.name.charAt(0).toUpperCase();
-    if (candidateData.email) document.getElementById('candidate-email').innerHTML = `📧 ${candidateData.email}`;
-    if (candidateData.phone) document.getElementById('candidate-phone').innerHTML = `📱 ${candidateData.phone}`;
+    if (candidateData.email) document.getElementById('candidate-email').innerHTML = candidateData.email;
+    if (candidateData.phone) document.getElementById('candidate-phone').innerHTML = candidateData.phone;
     
     const signal = candidateData.signal;
     const signalBadge = document.getElementById('signal-badge');
@@ -460,7 +460,7 @@ function renderCandidate() {
         archiveBtn.textContent = '📤 Unarchive';
         archiveBtn.title = 'Restore this candidate to active';
     } else {
-        archiveBtn.textContent = '📦 Archive';
+        archiveBtn.textContent = 'Archive';
         archiveBtn.title = 'Archive this candidate';
     }
     
@@ -481,9 +481,9 @@ function renderReferences() {
         return;
     }
     
-    const statusLabels = { pending: '⏳ Pending', calling: '📞 Calling...', completed: '✓ Done', failed: '✗ Failed', no_answer: '📵 No Answer', scheduled: '📅 Scheduled' };
-    const contactMethodLabels = { call_only: '📞 Call', survey_only: '📋 Survey', call_and_survey: '📞+📋 Both' };
-    const surveyStatusLabels = { not_sent: '', pending: '📋 Survey Pending', completed: '📋 Survey Done' };
+    const statusLabels = { pending: 'Pending', calling: 'Calling...', completed: 'Done', failed: 'Failed', no_answer: 'No Answer', scheduled: 'Scheduled' };
+    const contactMethodLabels = { call_only: 'Call', survey_only: 'Survey', call_and_survey: 'Both' };
+    const surveyStatusLabels = { not_sent: '', pending: 'Survey Pending', completed: 'Survey Done' };
     
     container.innerHTML = refs.map(ref => {
         const job = candidateData.jobs.find(j => j.id === ref.job_id) || candidateData.jobs[0] || {};
@@ -510,21 +510,21 @@ function renderReferences() {
                     ${ref.relationship ? `<div class="reference-detail"><span class="detail-label">Relationship</span><span class="detail-value">${escapeHtml(ref.relationship)}</span></div>` : ''}
                     ${ref.scheduled_time ? `<div class="reference-detail"><span class="detail-label">Scheduled</span><span class="detail-value">${formatDateTime(ref.scheduled_time)}</span></div>` : ''}
                     ${ref.score !== null ? `<div class="reference-detail"><span class="detail-label">Call Score</span><span class="detail-value score-value ${scoreClass}">${ref.score}</span></div>` : ''}
-                    ${ref.sms_sent ? `<div class="reference-detail"><span class="detail-label">SMS</span><span class="detail-value" style="color: var(--success);">✓ Sent</span></div>` : ''}
+                    ${ref.sms_sent ? `<div class="reference-detail"><span class="detail-label">SMS</span><span class="detail-value" style="color: var(--success);">Sent</span></div>` : ''}
                     ${ref.notes && (ref.status === 'no_answer' || ref.status === 'failed') ? `<div class="reference-detail"><span class="detail-label">Note</span><span class="detail-value" style="color: var(--warning);">${escapeHtml(ref.notes)}</span></div>` : ''}
                     <div class="reference-actions">
-                        ${ref.status === 'pending' && showCallBtn ? `<button class="btn btn-primary btn-sm" onclick="startCall('${ref.id}')">📞 Call</button>` : ''}
-                        ${ref.status === 'pending' && showSurveyBtn && surveyStatus === 'not_sent' ? `<button class="btn btn-primary btn-sm" onclick="openSurveyPreview('${ref.id}')">📋 Send Survey</button>` : ''}
-                        ${ref.status === 'pending' ? `<button class="btn btn-secondary btn-sm" onclick="openEditModal('${ref.id}')">✏️ Edit</button>` : ''}
-                        ${ref.status === 'no_answer' && showCallBtn ? `<button class="btn btn-primary btn-sm" onclick="startCall('${ref.id}')">📞 Retry</button><button class="btn btn-secondary btn-sm" onclick="openScheduleModal('${ref.id}', '${escapeHtml(ref.name)}')">📅 Schedule</button>${!ref.sms_sent ? `<button class="btn btn-secondary btn-sm" onclick="sendSMS('${ref.id}')">💬 SMS</button>` : ''}` : ''}
-                        ${ref.status === 'no_answer' && showSurveyBtn && surveyStatus === 'not_sent' ? `<button class="btn btn-secondary btn-sm" onclick="openSurveyPreview('${ref.id}')">📋 Send Survey</button>` : ''}
-                        ${ref.status === 'scheduled' && showCallBtn ? `<button class="btn btn-primary btn-sm" onclick="startCall('${ref.id}')">📞 Call Now</button><button class="btn btn-secondary btn-sm" onclick="openScheduleModal('${ref.id}', '${escapeHtml(ref.name)}')">📅 Reschedule</button>` : ''}
-                        ${ref.status === 'completed' ? `<button class="btn btn-secondary btn-sm" onclick="viewResults('${ref.call_id}')">📊 Call Results</button>` : ''}
-                        ${surveyStatus === 'completed' ? `<button class="btn btn-secondary btn-sm" onclick="viewSurveyResults('${ref.id}')">📋 Survey Results</button>` : ''}
+                        ${ref.status === 'pending' && showCallBtn ? `<button class="btn btn-primary btn-sm" onclick="startCall('${ref.id}')">Call</button>` : ''}
+                        ${ref.status === 'pending' && showSurveyBtn && surveyStatus === 'not_sent' ? `<button class="btn btn-primary btn-sm" onclick="openSurveyPreview('${ref.id}')">Send Survey</button>` : ''}
+                        ${ref.status === 'pending' ? `<button class="btn btn-secondary btn-sm" onclick="openEditModal('${ref.id}')">Edit</button>` : ''}
+                        ${ref.status === 'no_answer' && showCallBtn ? `<button class="btn btn-primary btn-sm" onclick="startCall('${ref.id}')">Retry</button><button class="btn btn-secondary btn-sm" onclick="openScheduleModal('${ref.id}', '${escapeHtml(ref.name)}')">Schedule</button>${!ref.sms_sent ? `<button class="btn btn-secondary btn-sm" onclick="sendSMS('${ref.id}')">SMS</button>` : ''}` : ''}
+                        ${ref.status === 'no_answer' && showSurveyBtn && surveyStatus === 'not_sent' ? `<button class="btn btn-secondary btn-sm" onclick="openSurveyPreview('${ref.id}')">Send Survey</button>` : ''}
+                        ${ref.status === 'scheduled' && showCallBtn ? `<button class="btn btn-primary btn-sm" onclick="startCall('${ref.id}')">Call Now</button><button class="btn btn-secondary btn-sm" onclick="openScheduleModal('${ref.id}', '${escapeHtml(ref.name)}')">Reschedule</button>` : ''}
+                        ${ref.status === 'completed' ? `<button class="btn btn-secondary btn-sm" onclick="viewResults('${ref.call_id}')">Call Results</button>` : ''}
+                        ${surveyStatus === 'completed' ? `<button class="btn btn-secondary btn-sm" onclick="viewSurveyResults('${ref.id}')">Survey Results</button>` : ''}
                         ${surveyStatus === 'pending' ? `<span style="color: var(--text-muted); font-size: 0.8rem;">Awaiting survey response</span>` : ''}
-                        ${ref.status === 'failed' && showCallBtn ? `<button class="btn btn-primary btn-sm" onclick="startCall('${ref.id}')">🔄 Retry</button>` : ''}
+                        ${ref.status === 'failed' && showCallBtn ? `<button class="btn btn-primary btn-sm" onclick="startCall('${ref.id}')">Retry</button>` : ''}
                         ${ref.status === 'calling' ? `<span style="color: var(--text-muted); font-size: 0.85rem;">Call in progress...</span>` : ''}
-                        ${ref.status !== 'calling' ? `<button class="btn btn-secondary btn-sm" onclick="deleteReference('${ref.id}')" title="Delete reference">🗑️</button>` : ''}
+                        ${ref.status !== 'calling' ? `<button class="btn btn-secondary btn-sm" onclick="deleteReference('${ref.id}')" title="Delete reference">Delete</button>` : ''}
                     </div>
                 </div>
             </div>`;
@@ -540,7 +540,7 @@ function renderJobs() {
         return;
     }
     
-    const statusLabels = { pending: '⏳', calling: '📞', completed: '✓', failed: '✗', no_answer: '📵', scheduled: '📅' };
+    const statusLabels = { pending: '', calling: '', completed: '', failed: '', no_answer: '', scheduled: '' };
     
     container.innerHTML = jobs.map((job, index) => {
         const jobRefs = candidateData.references.filter(r => r.job_id === job.id);
@@ -556,7 +556,7 @@ function renderJobs() {
                     ${job.achievements?.length ? `<div class="job-section"><div class="job-section-title">Achievements</div>${job.achievements.map(a => `<div class="job-item achievement">${escapeHtml(a)}</div>`).join('')}</div>` : ''}
                     <div class="references-section">
                         <div class="references-title">
-                            <span>👥 References for this role (${jobRefs.length})</span>
+                            <span>References for this role (${jobRefs.length})</span>
                             <button class="btn btn-sm btn-secondary" onclick="openAddModal(${index}, '${job.id}')">+ Add</button>
                         </div>
                         ${jobRefs.length > 0 ? `<div class="reference-list">${jobRefs.map(ref => `
@@ -566,8 +566,8 @@ function renderJobs() {
                                     <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(ref.phone)}</div>
                                 </div>
                                 <div style="display: flex; gap: 0.25rem;">
-                                    <button class="btn btn-sm btn-secondary" onclick="openEditModal('${ref.id}')" style="padding: 0.25rem 0.5rem;">✏️</button>
-                                    ${ref.status !== 'calling' ? `<button class="btn btn-sm btn-secondary" onclick="deleteReference('${ref.id}')" style="padding: 0.25rem 0.5rem;">🗑️</button>` : ''}
+                                    <button class="btn btn-sm btn-secondary" onclick="openEditModal('${ref.id}')" style="padding: 0.25rem 0.5rem;">Edit</button>
+                                    ${ref.status !== 'calling' ? `<button class="btn btn-sm btn-secondary" onclick="deleteReference('${ref.id}')" style="padding: 0.25rem 0.5rem;">Delete</button>` : ''}
                                 </div>
                             </div>`).join('')}</div>` : '<div class="empty-refs">No references yet for this role</div>'}
                     </div>
@@ -645,9 +645,9 @@ function renderSummary() {
     });
     
     function getVerificationStatus(data) {
-        if (data.denied > 0) return { icon: '❌', status: 'denied', label: 'Issues Found' };
-        if (data.confirmed > 0) return { icon: '✅', status: 'confirmed', label: 'Confirmed' };
-        return { icon: '❓', status: 'unknown', label: 'Unknown' };
+        if (data.denied > 0) return { icon: '', status: 'denied', label: 'Issues Found' };
+        if (data.confirmed > 0) return { icon: '', status: 'confirmed', label: 'Confirmed' };
+        return { icon: '', status: 'unknown', label: 'Unknown' };
     }
     
     const empStatus = getVerificationStatus(verificationData.employment);
@@ -693,7 +693,7 @@ function renderSummary() {
         const uniquePositive = [...new Set([...allPositiveSignals, ...allAchievementsVerified.map(a => `Verified: ${a}`)])];
         positiveSection.innerHTML = uniquePositive.slice(0, 8).map(signal => `
             <div class="signal-item">
-                <span class="signal-icon">✨</span>
+                <span class="signal-icon"></span>
                 <span class="signal-text">${escapeHtml(signal)}</span>
             </div>
         `).join('');
@@ -715,12 +715,12 @@ function renderSummary() {
     if (allConcerns.length > 0) {
         concernsSection.innerHTML = allConcerns.slice(0, 10).map(concern => `
             <div class="concern-item ${concern.type === 'warning' ? 'warning' : ''}">
-                <span class="concern-icon">${concern.type === 'warning' ? '⚠️' : '🚩'}</span>
+                <span class="concern-icon"></span>
                 <span class="concern-text">${escapeHtml(concern.text)}</span>
             </div>
         `).join('');
     } else {
-        concernsSection.innerHTML = '<p style="color: var(--success); font-size: 0.9rem;">✅ No concerns or red flags identified.</p>';
+        concernsSection.innerHTML = '<p style="color: var(--success); font-size: 0.9rem;">No concerns or red flags identified.</p>';
     }
     
     // Reference summaries
@@ -1022,10 +1022,10 @@ async function viewResults(checkId) {
         const scoreClass = data.verification_score >= 70 ? 'high' : data.verification_score >= 40 ? 'medium' : 'low';
         content.innerHTML = `
             <div class="score-display"><div class="score-value ${scoreClass}">${data.verification_score || '--'}</div><div class="score-label">Verification Score</div></div>
-            ${data.discrepancies?.length ? `<div class="discrepancies"><div class="discrepancies-title">⚠️ Discrepancies</div>${data.discrepancies.map(d => `<div class="discrepancy-item">${escapeHtml(d)}</div>`).join('')}</div>` : ''}
-            ${data.red_flags?.length ? `<div class="red-flags"><div class="red-flags-title">🚩 Red Flags</div>${data.red_flags.map(f => `<div class="red-flag-item">${escapeHtml(f)}</div>`).join('')}</div>` : ''}
-            ${data.achievements_verified?.length ? `<div class="summary-box" style="background: var(--success-bg);"><div class="summary-title" style="color: var(--success);">✓ Verified</div>${data.achievements_verified.map(a => `<p>• ${escapeHtml(a)}</p>`).join('')}</div>` : ''}
-            ${data.achievements_not_verified?.length ? `<div class="summary-box" style="background: var(--danger-bg);"><div class="summary-title" style="color: var(--danger);">✗ Not Verified</div>${data.achievements_not_verified.map(a => `<p>• ${escapeHtml(a)}</p>`).join('')}</div>` : ''}
+            ${data.discrepancies?.length ? `<div class="discrepancies"><div class="discrepancies-title">Discrepancies</div>${data.discrepancies.map(d => `<div class="discrepancy-item">${escapeHtml(d)}</div>`).join('')}</div>` : ''}
+            ${data.red_flags?.length ? `<div class="red-flags"><div class="red-flags-title">Red Flags</div>${data.red_flags.map(f => `<div class="red-flag-item">${escapeHtml(f)}</div>`).join('')}</div>` : ''}
+            ${data.achievements_verified?.length ? `<div class="summary-box" style="background: var(--success-bg);"><div class="summary-title" style="color: var(--success);">Verified</div>${data.achievements_verified.map(a => `<p>• ${escapeHtml(a)}</p>`).join('')}</div>` : ''}
+            ${data.achievements_not_verified?.length ? `<div class="summary-box" style="background: var(--danger-bg);"><div class="summary-title" style="color: var(--danger);">Not Verified</div>${data.achievements_not_verified.map(a => `<p>• ${escapeHtml(a)}</p>`).join('')}</div>` : ''}
             <div class="summary-box"><div class="summary-title">Summary</div><p>${escapeHtml(data.summary || 'No summary available.')}</p></div>
             <div class="summary-box"><div class="summary-title">Transcript</div><p style="white-space: pre-wrap; font-size: 0.85rem; max-height: 200px; overflow-y: auto;">${escapeHtml(data.transcript || 'No transcript.')}</p></div>`;
     } catch (error) { content.innerHTML = `<p style="color: var(--danger);">Error: ${error.message}</p>`; }
@@ -1060,33 +1060,33 @@ function renderReferenceRequestStatus(data) {
     
     if (data.status === 'none') {
         container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No request sent yet. Send an email to the candidate to request their references.</p>';
-        btn.textContent = '📧 Send Request Email';
+        btn.textContent = 'Send Request Email';
         btn.onclick = sendReferenceRequest;
     } else if (data.status === 'pending') {
         const sentDate = data.request?.email_sent_at ? formatDateTime(data.request.email_sent_at) : '';
         container.innerHTML = `
             <div style="background: var(--warning-bg); color: var(--warning); padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.85rem;">
-                ⏳ <strong>Awaiting Response</strong><br>
+                <strong>Awaiting Response</strong><br>
                 <span style="font-size: 0.8rem;">Request sent ${sentDate}</span>
             </div>`;
-        btn.textContent = '🔄 Send Reminder';
+        btn.textContent = 'Send Reminder';
         btn.onclick = resendReferenceRequest;
     } else if (data.status === 'completed') {
         const completedDate = data.request?.completed_at ? formatDateTime(data.request.completed_at) : '';
         container.innerHTML = `
             <div style="background: var(--success-bg); color: var(--success); padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.85rem;">
-                ✓ <strong>References Submitted</strong><br>
+                <strong>References Submitted</strong><br>
                 <span style="font-size: 0.8rem;">Completed ${completedDate}</span>
             </div>`;
-        btn.textContent = '📧 Send New Request';
+        btn.textContent = 'Send New Request';
         btn.onclick = sendReferenceRequest;
     } else if (data.status === 'expired') {
         container.innerHTML = `
             <div style="background: var(--danger-bg); color: var(--danger); padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.85rem;">
-                ✗ <strong>Request Expired</strong><br>
+                <strong>Request Expired</strong><br>
                 <span style="font-size: 0.8rem;">The previous link has expired</span>
             </div>`;
-        btn.textContent = '📧 Send New Request';
+        btn.textContent = 'Send New Request';
         btn.onclick = sendReferenceRequest;
     }
 }
@@ -1221,16 +1221,16 @@ async function openSurveyPreview(refId) {
                     <div class="survey-question-item" style="padding: 0.75rem; margin-bottom: 0.5rem; background: var(--bg-secondary); border-radius: 8px;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
                             <div style="flex: 1;">
-                                <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">${q.question_type === 'ai_generated' ? '🤖 AI Generated' : '📋 Standard'} • ${q.response_type}</span>
+                                <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">${q.question_type === 'ai_generated' ? 'AI Generated' : 'Standard'} • ${q.response_type}</span>
                                 <textarea id="sq-${i}" style="width: 100%; margin-top: 0.25rem; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; min-height: 60px;">${escapeHtml(q.question_text)}</textarea>
                             </div>
-                            <button onclick="removeSurveyQuestion(${i})" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 0.25rem;">🗑️</button>
+                            <button onclick="removeSurveyQuestion(${i})" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 0.25rem;">Delete</button>
                         </div>
                     </div>
                 `).join('')}
             </div>
             <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
-                <button class="btn btn-primary" style="flex: 1;" onclick="sendSurvey()">📧 Send Survey</button>
+                <button class="btn btn-primary" style="flex: 1;" onclick="sendSurvey()">Send Survey</button>
                 <button class="btn btn-secondary" onclick="closeSurveyPreviewModal()">Cancel</button>
             </div>
         `;
@@ -1304,11 +1304,11 @@ async function viewSurveyResults(refId) {
             
             ${data.survey_summary ? `<div class="summary-box" style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"><div style="font-weight: 600; margin-bottom: 0.5rem;">Summary</div><p>${escapeHtml(data.survey_summary)}</p></div>` : ''}
             
-            ${data.survey_red_flags?.length ? `<div style="background: var(--danger-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"><div style="font-weight: 600; color: var(--danger); margin-bottom: 0.5rem;">🚩 Red Flags</div>${data.survey_red_flags.map(f => `<p style="margin: 0.25rem 0;">• ${escapeHtml(f)}</p>`).join('')}</div>` : ''}
+            ${data.survey_red_flags?.length ? `<div style="background: var(--danger-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"><div style="font-weight: 600; color: var(--danger); margin-bottom: 0.5rem;">Red Flags</div>${data.survey_red_flags.map(f => `<p style="margin: 0.25rem 0;">• ${escapeHtml(f)}</p>`).join('')}</div>` : ''}
             
-            ${analysis.strengths?.length ? `<div style="background: var(--success-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"><div style="font-weight: 600; color: var(--success); margin-bottom: 0.5rem;">✓ Strengths</div>${analysis.strengths.map(s => `<p style="margin: 0.25rem 0;">• ${escapeHtml(s)}</p>`).join('')}</div>` : ''}
+            ${analysis.strengths?.length ? `<div style="background: var(--success-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"><div style="font-weight: 600; color: var(--success); margin-bottom: 0.5rem;">Strengths</div>${analysis.strengths.map(s => `<p style="margin: 0.25rem 0;">• ${escapeHtml(s)}</p>`).join('')}</div>` : ''}
             
-            ${analysis.areas_for_development?.length ? `<div style="background: var(--warning-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"><div style="font-weight: 600; color: var(--warning); margin-bottom: 0.5rem;">⚠️ Areas for Development</div>${analysis.areas_for_development.map(a => `<p style="margin: 0.25rem 0;">• ${escapeHtml(a)}</p>`).join('')}</div>` : ''}
+            ${analysis.areas_for_development?.length ? `<div style="background: var(--warning-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"><div style="font-weight: 600; color: var(--warning); margin-bottom: 0.5rem;">Areas for Development</div>${analysis.areas_for_development.map(a => `<p style="margin: 0.25rem 0;">• ${escapeHtml(a)}</p>`).join('')}</div>` : ''}
             
             <div style="margin-top: 1.5rem;">
                 <div style="font-weight: 600; margin-bottom: 0.75rem;">Question Responses</div>

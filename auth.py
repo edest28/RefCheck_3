@@ -46,19 +46,31 @@ def validate_password(password):
 def log_audit(user_id, action, resource_type=None, resource_id=None, details=None):
     """Create an audit log entry."""
     try:
+        from flask import has_request_context
+        ip_address = None
+        user_agent = None
+        if has_request_context():
+            try:
+                ip_address = request.remote_addr if request else None
+                user_agent = request.user_agent.string[:255] if request and request.user_agent else None
+            except:
+                pass
+        
         log = AuditLog(
             user_id=user_id,
             action=action,
             resource_type=resource_type,
             resource_id=resource_id,
             details=json.dumps(details) if details else None,
-            ip_address=request.remote_addr if request else None,
-            user_agent=request.user_agent.string[:255] if request and request.user_agent else None
+            ip_address=ip_address,
+            user_agent=user_agent
         )
         db.session.add(log)
         db.session.commit()
     except Exception as e:
+        import traceback
         print(f"Audit log error: {e}")
+        print(traceback.format_exc())
 
 
 def api_login_required(f):

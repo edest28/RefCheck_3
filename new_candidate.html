@@ -85,7 +85,7 @@
 <section id="step1">
     <div class="card">
         <div class="card-body">
-            <div class="card-title"><span class="card-icon">📄</span> Candidate Information</div>
+            <div class="card-title"><span class="card-icon"></span> Candidate Information</div>
             
             <div class="form-row">
                 <div class="form-group">
@@ -101,13 +101,13 @@
             <div class="form-group">
                 <label>Resume Upload *</label>
                 <div class="file-upload" id="drop-zone" onclick="document.getElementById('file-input').click()">
-                    <div class="file-upload-icon">📁</div>
+                    <div class="file-upload-icon"></div>
                     <p class="file-upload-text">Drop resume here or click to browse</p>
                     <p class="hint">PDF, DOC, DOCX, or TXT (max 16MB)</p>
                 </div>
                 <input type="file" id="file-input" class="file-input" accept=".pdf,.doc,.docx,.txt">
                 <div id="selected-file" class="selected-file hidden">
-                    <span>📄</span>
+                    <span></span>
                     <span class="selected-file-name" id="selected-file-name"></span>
                     <button class="selected-file-remove" onclick="clearFile()">×</button>
                 </div>
@@ -125,7 +125,7 @@
     <div class="card mb-2">
         <div class="card-body">
             <div class="card-title">
-                <span class="card-icon">👤</span>
+                <span class="card-icon"></span>
                 <span id="candidate-display-name">Candidate Name</span>
                 <span style="font-weight: 400; color: var(--text-muted); font-size: 0.9rem; margin-left: auto;" id="position-display"></span>
             </div>
@@ -135,7 +135,7 @@
     
     <div class="card mb-2">
         <div class="card-body">
-            <div class="card-title"><span class="card-icon">💼</span> Work History & References</div>
+            <div class="card-title"><span class="card-icon"></span> Work History & References</div>
             <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Add at least one reference for each role. You can also add custom questions.</p>
             <div class="jobs-list" id="jobs-list"></div>
         </div>
@@ -143,7 +143,7 @@
     
     <div class="card">
         <div class="card-body">
-            <div class="card-title"><span class="card-icon">💬</span> SMS Follow-up Template</div>
+            <div class="card-title"><span class="card-icon"></span> SMS Follow-up Template</div>
             <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">If a reference doesn't answer, this message will be sent via SMS.</p>
             <div class="form-group">
                 <label for="sms-template">SMS Message</label>
@@ -252,10 +252,10 @@
                     <div class="job-dates">${escapeHtml(job.dates)}</div>
                 </div>
                 <div class="job-body">
-                    ${job.responsibilities?.length ? `<div class="job-section"><div class="job-section-title">Responsibilities</div>${job.responsibilities.map(r => `<div class="job-item"><span class="job-item-icon resp">○</span><span>${escapeHtml(r)}</span></div>`).join('')}</div>` : ''}
-                    ${job.achievements?.length ? `<div class="job-section"><div class="job-section-title">Achievements</div>${job.achievements.map(a => `<div class="job-item"><span class="job-item-icon ach">★</span><span>${escapeHtml(a)}</span></div>`).join('')}</div>` : ''}
+                    ${job.responsibilities?.length ? `<div class="job-section"><div class="job-section-title">Responsibilities</div>${job.responsibilities.map(r => `<div class="job-item"><span class="job-item-icon resp"></span><span>${escapeHtml(r)}</span></div>`).join('')}</div>` : ''}
+                    ${job.achievements?.length ? `<div class="job-section"><div class="job-section-title">Achievements</div>${job.achievements.map(a => `<div class="job-item"><span class="job-item-icon ach"></span><span>${escapeHtml(a)}</span></div>`).join('')}</div>` : ''}
                     <div class="reference-section">
-                        <div class="reference-section-title"><span>👥</span> References for this role</div>
+                        <div class="reference-section-title"><span></span> References for this role</div>
                         <div class="reference-list" id="refs-${index}"><p style="color: var(--text-muted); font-size: 0.85rem;">No references added yet</p></div>
                         <div class="add-reference-form">
                             <input type="text" id="ref-name-${index}" placeholder="Reference name *">
@@ -263,9 +263,9 @@
                             <input type="email" id="ref-email-${index}" placeholder="Email (required for survey)">
                             <input type="text" id="ref-relationship-${index}" placeholder="Relationship (e.g., Manager)">
                             <select id="ref-contact-method-${index}" style="grid-column: span 2; padding: 0.625rem 0.875rem; font-size: 0.85rem;">
-                                <option value="call_only">📞 Phone Call Only</option>
-                                <option value="survey_only">📧 Email Survey Only</option>
-                                <option value="call_and_survey">📞📧 Both Call + Survey</option>
+                                <option value="call_only">Phone Call Only</option>
+                                <option value="survey_only">Email Survey Only</option>
+                                <option value="call_and_survey">Both Call + Survey</option>
                             </select>
                             <button class="btn btn-secondary btn-sm add-reference-btn" onclick="addReference(${index})">+ Add Reference</button>
                         </div>
@@ -339,10 +339,10 @@
         }
 
         const getContactMethodBadge = (method) => {
-            if (method === 'call_only') return '<span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: var(--accent-bg); color: var(--accent); border-radius: 4px; font-weight: 600;">📞 Call</span>';
-            if (method === 'survey_only') return '<span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: var(--success-bg); color: var(--success); border-radius: 4px; font-weight: 600;">📧 Survey</span>';
-            if (method === 'call_and_survey') return '<span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: var(--warning-bg); color: var(--warning); border-radius: 4px; font-weight: 600;">📞📧 Both</span>';
-            return '<span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: var(--bg-tertiary); color: var(--text-muted); border-radius: 4px; font-weight: 600;">📞 Call</span>';
+            if (method === 'call_only') return '<span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: var(--accent-bg); color: var(--accent); border-radius: 4px; font-weight: 600;">Call</span>';
+            if (method === 'survey_only') return '<span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: var(--success-bg); color: var(--success); border-radius: 4px; font-weight: 600;">Survey</span>';
+            if (method === 'call_and_survey') return '<span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: var(--warning-bg); color: var(--warning); border-radius: 4px; font-weight: 600;">Both</span>';
+            return '<span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: var(--bg-tertiary); color: var(--text-muted); border-radius: 4px; font-weight: 600;">Call</span>';
         };
 
         container.innerHTML = refs.map(ref => `

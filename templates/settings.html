@@ -24,9 +24,9 @@
 
 <div class="settings-grid">
     <nav class="settings-nav">
-        <button class="settings-nav-item active" onclick="showSection('profile', this)">👤 Profile</button>
-        <button class="settings-nav-item" onclick="showSection('sms', this)">💬 SMS Template</button>
-        <button class="settings-nav-item" onclick="showSection('security', this)">🔒 Security</button>
+        <button class="settings-nav-item active" onclick="showSection('profile', this)">Profile</button>
+        <button class="settings-nav-item" onclick="showSection('sms', this)">SMS Template</button>
+        <button class="settings-nav-item" onclick="showSection('security', this)">Security</button>
     </nav>
     
     <div class="settings-content">
@@ -46,7 +46,7 @@
                             <label for="timezone">Timezone</label>
                             <select id="timezone"><option value="America/New_York">Eastern Time</option><option value="America/Chicago">Central Time</option><option value="America/Denver">Mountain Time</option><option value="America/Los_Angeles">Pacific Time</option><option value="UTC">UTC</option></select>
                         </div>
-                        <button type="submit" class="btn btn-primary">Save Changes</button><span class="save-indicator" id="profile-saved">✓ Saved</span>
+                        <button type="submit" class="btn btn-primary">Save Changes</button><span class="save-indicator" id="profile-saved">Saved</span>
                     </form>
                 </div>
             </div>
@@ -59,7 +59,7 @@
                     <p class="section-description">This message is sent when a reference call goes unanswered.</p>
                     <form onsubmit="saveSMS(event)">
                         <div class="form-group"><label for="sms_template">SMS Message</label><textarea id="sms_template" rows="5"></textarea><p class="hint">Variables: {candidate_first_name}, {candidate_last_name}</p></div>
-                        <button type="submit" class="btn btn-primary">Save Template</button><span class="save-indicator" id="sms-saved">✓ Saved</span>
+                        <button type="submit" class="btn btn-primary">Save Template</button><span class="save-indicator" id="sms-saved">Saved</span>
                     </form>
                 </div>
             </div>
@@ -74,7 +74,7 @@
                         <div class="form-group"><label for="current_password">Current Password</label><input type="password" id="current_password" required></div>
                         <div class="form-group"><label for="new_password">New Password</label><input type="password" id="new_password" required><p class="hint">At least 8 characters with uppercase, lowercase, and number</p></div>
                         <div class="form-group"><label for="confirm_password">Confirm New Password</label><input type="password" id="confirm_password" required></div>
-                        <button type="submit" class="btn btn-primary">Change Password</button><span class="save-indicator" id="password-saved">✓ Changed</span>
+                        <button type="submit" class="btn btn-primary">Change Password</button><span class="save-indicator" id="password-saved">Changed</span>
                     </form>
                 </div>
             </div>
