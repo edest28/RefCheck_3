@@ -18,6 +18,13 @@ def create_app(config_name='default'):
     # Load configuration
     app.config.from_object(config[config_name])
     
+    # IMPORTANT: Override database URL from environment at runtime
+    # This is necessary because class attributes are evaluated at import time,
+    # before Railway injects environment variables
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    
     # Handle PostgreSQL URL format from Heroku/Railway
     if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
         app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace(
