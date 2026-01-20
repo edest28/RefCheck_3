@@ -11,6 +11,13 @@ from app.models import db, User
 def create_app(config_name='default'):
     """Create and configure the Flask application."""
     import os
+    import sys
+    
+    # Debug: Print environment variable status
+    database_url = os.environ.get('DATABASE_URL')
+    print(f"[APP INIT] DATABASE_URL from env: {database_url[:50] if database_url else 'NOT SET'}...", file=sys.stderr)
+    print(f"[APP INIT] Config name: {config_name}", file=sys.stderr)
+    
     # Set template folder to project root templates directory
     template_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'templates')
     app = Flask(__name__, template_folder=template_folder)
@@ -18,18 +25,22 @@ def create_app(config_name='default'):
     # Load configuration
     app.config.from_object(config[config_name])
     
+    print(f"[APP INIT] Config DB URI before override: {app.config.get('SQLALCHEMY_DATABASE_URI', 'NOT SET')[:50]}...", file=sys.stderr)
+    
     # IMPORTANT: Override database URL from environment at runtime
     # This is necessary because class attributes are evaluated at import time,
     # before Railway injects environment variables
-    database_url = os.environ.get('DATABASE_URL')
     if database_url:
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+        print(f"[APP INIT] Overrode with DATABASE_URL from environment", file=sys.stderr)
     
     # Handle PostgreSQL URL format from Heroku/Railway
     if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
         app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace(
             'postgres://', 'postgresql://', 1
         )
+    
+    print(f"[APP INIT] Final DB URI: {app.config['SQLALCHEMY_DATABASE_URI'][:50]}...", file=sys.stderr)
     
     # Initialize extensions
     db.init_app(app)
