@@ -14,6 +14,14 @@ def create_app(config_name='default'):
     from refcheck_app.extensions import login_manager, migrate
     from refcheck_app.models import db, User
     
+    # Debug: Print all environment variables containing DATABASE or POSTGRES
+    print(f"[APP INIT] Environment vars with DATABASE/POSTGRES:", file=sys.stderr)
+    for key, value in os.environ.items():
+        if 'DATABASE' in key.upper() or 'POSTGRES' in key.upper() or 'PG' in key.upper():
+            # Mask password in output
+            masked = value[:20] + '...' if len(value) > 20 else value
+            print(f"[APP INIT]   {key}={masked}", file=sys.stderr)
+    
     # Debug: Print database configuration
     database_url = os.environ.get('DATABASE_URL')
     print(f"[APP INIT] DATABASE_URL from env: {'SET' if database_url else 'NOT SET'}", file=sys.stderr)
