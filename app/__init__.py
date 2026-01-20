@@ -1,6 +1,7 @@
 """
 Flask application factory for RefCheck AI.
 """
+import os
 from flask import Flask
 from app.config import config
 from app.extensions import login_manager, migrate
@@ -90,3 +91,8 @@ def create_app(config_name='default'):
             return []
     
     return app
+
+
+# Create the app instance at module level for gunicorn compatibility
+# This allows both `gunicorn app:app` and `gunicorn wsgi:app` to work
+app = create_app(os.environ.get('FLASK_ENV', 'production'))
