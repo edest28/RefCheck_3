@@ -12,7 +12,21 @@ from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 
-from models import db, User, Candidate, Job, Reference, ResumeFile, AuditLog, ReferenceRequest, SurveyRequest, SurveyQuestion, SurveyResponse
+from models import (
+    db,
+    User,
+    Candidate,
+    Job,
+    Reference,
+    ResumeFile,
+    AuditLog,
+    ReferenceRequest,
+    SurveyRequest,
+    SurveyQuestion,
+    SurveyResponse,
+    JobPosting,
+    JobApplication,
+)
 from auth import (
     login_manager, validate_email, validate_password, log_audit,
     api_login_required, verify_resource_ownership, get_user_settings
@@ -26,7 +40,9 @@ from services import (
     get_survey_questions_for_reference, analyze_survey_responses, send_survey_email, send_survey_confirmation_email,
     send_callback_request_sms, parse_callback_time_with_claude, send_callback_confirmation_sms,
     send_callback_final_confirmation_sms, send_timezone_clarification_sms, add_to_sms_conversation,
-    ROLE_CATEGORIES, STANDARDIZED_SURVEY_QUESTIONS, generate_ai_survey_questions
+    STANDARDIZED_SURVEY_QUESTIONS, generate_ai_survey_questions,
+    generate_job_description_with_claude,
+    analyze_application_with_claude
 )
 
 load_dotenv()
@@ -267,6 +283,436 @@ def view_candidate(candidate_id):
 def settings():
     """User settings page."""
     return render_template('settings.html')
+
+
+# ============================================================================
+# ATS - Job Postings (Internal)
+# ============================================================================
+
+@app.route('/jobs')
+@login_required
+def jobs():
+    """List job postings for the current user."""
+    postings = (
+        JobPosting.query.filter_by(user_id=current_user.id)
+        .order_by(JobPosting.updated_at.desc())
+        .all()
+    )
+    return render_template('jobs.html', postings=postings)
+
+
+@app.route('/jobs/new', methods=['GET'])
+@login_required
+def new_job():
+    """Create job posting page."""
+    return render_template('job_new.html')
+
+
+@app.route('/jobs', methods=['POST'])
+@login_required
+def create_job_posting():
+    """Create a job posting (internal)."""
+    title = (request.form.get('title') or '').strip()
+    if not title:
+        flash('Job title is required', 'error')
+        return redirect(url_for('new_job'))
+
+    posting = JobPosting(
+        user_id=current_user.id,
+        title=title,
+        company_name=(request.form.get('company_name') or current_user.company_name or '').strip() or None,
+        company_website=(request.form.get('company_website') or '').strip() or None,
+        department=(request.form.get('department') or '').strip() or None,
+        location=(request.form.get('location') or '').strip() or None,
+        employment_type=(request.form.get('employment_type') or '').strip() or None,
+        seniority=(request.form.get('seniority') or '').strip() or None,
+        description_raw=(request.form.get('description_raw') or '').strip() or None,
+        description_html=(request.form.get('description_html') or '').strip() or None,
+        status=(request.form.get('status') or 'draft').strip() or 'draft',
+        salary_range_text=(request.form.get('salary_range_text') or '').strip() or None,
+        public_id=secrets.token_urlsafe(16),
+    )
+
+    db.session.add(posting)
+    db.session.commit()
+
+    log_audit(current_user.id, 'job_posting_created', 'job_posting', posting.id, {
+        'title': posting.title,
+        'status': posting.status,
+    })
+
+    return redirect(url_for('job_detail', job_id=posting.id))
+
+
+@app.route('/jobs/<job_id>')
+@login_required
+def job_detail(job_id):
+    """Job posting detail + pipeline view."""
+    posting = JobPosting.query.get_or_404(job_id)
+    if posting.user_id != current_user.id:
+        flash('Access denied', 'error')
+        return redirect(url_for('jobs'))
+
+    applications = (
+        JobApplication.query.filter_by(job_posting_id=posting.id)
+        .order_by(JobApplication.created_at.desc())
+        .all()
+    )
+    return render_template(
+        'job_detail.html',
+        posting=posting,
+        applications=applications,
+    )
+
+
+@app.route('/jobs/<job_id>/edit', methods=['GET'])
+@login_required
+def edit_job(job_id):
+    """Edit job posting page."""
+    posting = JobPosting.query.get_or_404(job_id)
+    if posting.user_id != current_user.id:
+        flash('Access denied', 'error')
+        return redirect(url_for('jobs'))
+    return render_template('job_edit.html', posting=posting)
+
+
+@app.route('/jobs/<job_id>/edit', methods=['POST'])
+@login_required
+def update_job_posting(job_id):
+    """Update a job posting."""
+    posting = JobPosting.query.get_or_404(job_id)
+    if posting.user_id != current_user.id:
+        flash('Access denied', 'error')
+        return redirect(url_for('jobs'))
+
+    title = (request.form.get('title') or '').strip()
+    if not title:
+        flash('Job title is required', 'error')
+        return redirect(url_for('edit_job', job_id=job_id))
+
+    posting.title = title
+    posting.company_name = (request.form.get('company_name') or '').strip() or None
+    posting.company_website = (request.form.get('company_website') or '').strip() or None
+    posting.department = (request.form.get('department') or '').strip() or None
+    posting.location = (request.form.get('location') or '').strip() or None
+    posting.employment_type = (request.form.get('employment_type') or '').strip() or None
+    posting.seniority = (request.form.get('seniority') or '').strip() or None
+    posting.description_raw = (request.form.get('description_raw') or '').strip() or None
+    posting.description_html = (request.form.get('description_html') or '').strip() or None
+    posting.status = (request.form.get('status') or 'draft').strip() or 'draft'
+    posting.salary_range_text = (request.form.get('salary_range_text') or '').strip() or None
+
+    db.session.commit()
+
+    log_audit(current_user.id, 'job_posting_updated', 'job_posting', posting.id, {
+        'title': posting.title,
+        'status': posting.status,
+    })
+
+    flash('Job updated successfully', 'success')
+    return redirect(url_for('job_detail', job_id=posting.id))
+
+
+# ============================================================================
+# ATS - Public job pages + application
+# ============================================================================
+
+@app.route('/apply/jobs', methods=['GET'])
+def public_jobs():
+    """Public list of published jobs (v1: all published jobs)."""
+    postings = (
+        JobPosting.query.filter_by(status='published')
+        .order_by(JobPosting.updated_at.desc())
+        .all()
+    )
+    return render_template('public_careers.html', postings=postings)
+
+
+@app.route('/apply/jobs/<public_id>', methods=['GET'])
+def public_job(public_id):
+    """Public job detail page with application form."""
+    posting = JobPosting.query.filter_by(public_id=public_id, status='published').first()
+    if not posting:
+        return render_template('public_job.html', error='Job not found or no longer accepting applications.'), 404
+    return render_template('public_job.html', posting=posting, error=None, success=False)
+
+
+@app.route('/apply/jobs/<public_id>', methods=['POST'])
+def submit_job_application(public_id):
+    """Handle public job application submission."""
+    posting = JobPosting.query.filter_by(public_id=public_id, status='published').first()
+    if not posting:
+        return render_template('public_job.html', error='Job not found or no longer accepting applications.'), 404
+
+    full_name = (request.form.get('full_name') or '').strip()
+    email = (request.form.get('email') or '').strip()
+    phone = (request.form.get('phone') or '').strip()
+    location = (request.form.get('location') or '').strip()
+    linkedin_url = (request.form.get('linkedin_url') or '').strip()
+    portfolio_url = (request.form.get('portfolio_url') or '').strip()
+    salary_expectations_text = (request.form.get('salary_expectations_text') or '').strip()
+    availability_text = (request.form.get('availability_text') or '').strip()
+
+    work_country = (request.form.get('work_country') or '').strip()
+    work_authorization_status = (request.form.get('work_authorization_status') or '').strip()
+    requires_sponsorship = (request.form.get('requires_sponsorship') or '').strip().lower()
+    requires_sponsorship_bool = True if requires_sponsorship in ['yes', 'true', '1', 'on'] else False
+
+    cover_letter_text = (request.form.get('cover_letter_text') or '').strip()
+
+    if not full_name or not email:
+        return render_template('public_job.html', posting=posting, error='Name and email are required.', success=False), 400
+
+    if 'resume' not in request.files or request.files['resume'].filename == '':
+        return render_template('public_job.html', posting=posting, error='Resume upload is required.', success=False), 400
+
+    resume_file = request.files['resume']
+    if not allowed_file(resume_file.filename):
+        return render_template('public_job.html', posting=posting, error='Invalid resume file type.', success=False), 400
+
+    try:
+        resume_bytes = resume_file.read()
+        resume_filename = secure_filename(resume_file.filename)
+
+        if resume_filename.lower().endswith('.pdf'):
+            resume_text = extract_text_from_pdf(resume_bytes) or ''
+        else:
+            resume_text = resume_bytes.decode('utf-8', errors='ignore')
+
+        stored_resume = ResumeFile(
+            candidate_id=None,  # no candidate yet
+            filename=resume_filename,
+            original_filename=resume_file.filename,
+            content_type=resume_file.content_type,
+            file_size=len(resume_bytes),
+            file_data=resume_bytes,
+        )
+        db.session.add(stored_resume)
+        db.session.flush()
+
+        application = JobApplication(
+            job_posting_id=posting.id,
+            full_name=full_name,
+            email=email,
+            phone=phone or None,
+            location=location or None,
+            linkedin_url=linkedin_url or None,
+            portfolio_url=portfolio_url or None,
+            salary_expectations_text=salary_expectations_text or None,
+            availability_text=availability_text or None,
+            work_country=work_country or None,
+            work_authorization_status=work_authorization_status or None,
+            requires_sponsorship=requires_sponsorship_bool,
+            resume_filename=resume_filename,
+            resume_text=resume_text,
+            resume_file_id=stored_resume.id,
+            cover_letter_text=cover_letter_text or None,
+            stage='applied',
+        )
+        db.session.add(application)
+        db.session.commit()
+
+        # Audit (tenant owner)
+        log_audit(posting.user_id, 'job_application_submitted', 'job_application', application.id, {
+            'job_posting_id': posting.id,
+            'applicant_email': email,
+        })
+
+        return render_template('public_job.html', posting=posting, error=None, success=True)
+    except Exception as e:
+        db.session.rollback()
+        return render_template('public_job.html', posting=posting, error=f'Failed to submit application: {str(e)}', success=False), 500
+
+
+# ============================================================================
+# ATS - AI job description generation
+# ============================================================================
+
+@app.route('/api/jobs/ai-generate-jd', methods=['POST'])
+@api_login_required
+def ai_generate_jd():
+    """Generate a job description using Claude."""
+    data = request.json or {}
+    title = (data.get('title') or '').strip()
+    if not title:
+        return jsonify({'error': 'title is required'}), 400
+
+    result = generate_job_description_with_claude(
+        title=title,
+        department=(data.get('department') or '').strip() or None,
+        seniority=(data.get('seniority') or '').strip() or None,
+        location=(data.get('location') or '').strip() or None,
+        focus_areas=(data.get('focus_areas') or '').strip() or None,
+        company_name=(data.get('company_name') or current_user.company_name or '').strip() or None,
+        company_website=(data.get('company_website') or '').strip() or None,
+        api_key=ANTHROPIC_API_KEY,
+    )
+
+    if not result:
+        return jsonify({'error': 'Failed to generate job description'}), 500
+
+    log_audit(current_user.id, 'job_description_generated_ai', details={'title': title})
+    return jsonify(result)
+
+
+# ============================================================================
+# ATS - AI screening
+# ============================================================================
+
+@app.route('/api/jobs/<job_id>/applications/<app_id>/ai-screen', methods=['POST'])
+@api_login_required
+def ai_screen_application(job_id, app_id):
+    posting = JobPosting.query.get_or_404(job_id)
+    if posting.user_id != current_user.id:
+        return jsonify({'error': 'Access denied'}), 403
+
+    application = JobApplication.query.get_or_404(app_id)
+    if application.job_posting_id != posting.id:
+        return jsonify({'error': 'Application not found'}), 404
+
+    analysis = analyze_application_with_claude(posting, application, ANTHROPIC_API_KEY)
+    if not analysis:
+        return jsonify({'error': 'Failed to screen application'}), 500
+
+    application.ai_score = analysis.get('score')
+    application.ai_score_label = analysis.get('score_label')
+    application.ai_summary = analysis.get('summary')
+    reasons = (
+        analysis.get('strengths', [])
+        + [f"Risk: {x}" for x in (analysis.get('risks', []) or [])]
+        + [f"Missing: {x}" for x in (analysis.get('missing_requirements', []) or [])]
+    )
+    application.ai_reasons = json.dumps(reasons)
+    application.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    log_audit(current_user.id, 'job_application_screened_ai', 'job_application', application.id, {
+        'job_posting_id': posting.id,
+        'score': application.ai_score,
+    })
+
+    return jsonify({'success': True, 'application': application.to_dict()})
+
+
+@app.route('/api/jobs/<job_id>/applications/ai-screen-all', methods=['POST'])
+@api_login_required
+def ai_screen_all_applications(job_id):
+    posting = JobPosting.query.get_or_404(job_id)
+    if posting.user_id != current_user.id:
+        return jsonify({'error': 'Access denied'}), 403
+
+    apps = JobApplication.query.filter_by(job_posting_id=posting.id, stage='applied').all()
+    results = []
+    for application in apps:
+        analysis = analyze_application_with_claude(posting, application, ANTHROPIC_API_KEY)
+        if not analysis:
+            results.append({'id': application.id, 'error': 'screen_failed'})
+            continue
+        application.ai_score = analysis.get('score')
+        application.ai_score_label = analysis.get('score_label')
+        application.ai_summary = analysis.get('summary')
+        reasons = (
+            analysis.get('strengths', [])
+            + [f"Risk: {x}" for x in (analysis.get('risks', []) or [])]
+            + [f"Missing: {x}" for x in (analysis.get('missing_requirements', []) or [])]
+        )
+        application.ai_reasons = json.dumps(reasons)
+        application.updated_at = datetime.utcnow()
+        results.append({'id': application.id, 'score': application.ai_score})
+
+    db.session.commit()
+    log_audit(current_user.id, 'job_applications_screened_ai_bulk', details={'job_posting_id': posting.id, 'count': len(apps)})
+    return jsonify({'success': True, 'results': results})
+
+
+@app.route('/api/jobs/<job_id>/applications', methods=['GET'])
+@api_login_required
+def list_job_applications(job_id):
+    posting = JobPosting.query.get_or_404(job_id)
+    if posting.user_id != current_user.id:
+        return jsonify({'error': 'Access denied'}), 403
+
+    stage = (request.args.get('stage') or '').strip() or None
+    q = JobApplication.query.filter_by(job_posting_id=posting.id)
+    if stage:
+        q = q.filter_by(stage=stage)
+    applications = q.order_by(JobApplication.ai_score.desc().nullslast(), JobApplication.created_at.desc()).all()
+    return jsonify([a.to_dict() for a in applications])
+
+
+# ============================================================================
+# ATS - Pipeline stage management
+# ============================================================================
+
+@app.route('/api/jobs/<job_id>/applications/<app_id>', methods=['PATCH'])
+@api_login_required
+def update_job_application(job_id, app_id):
+    posting = JobPosting.query.get_or_404(job_id)
+    if posting.user_id != current_user.id:
+        return jsonify({'error': 'Access denied'}), 403
+
+    application = JobApplication.query.get_or_404(app_id)
+    if application.job_posting_id != posting.id:
+        return jsonify({'error': 'Application not found'}), 404
+
+    data = request.json or {}
+    if 'stage' in data:
+        new_stage = (data.get('stage') or '').strip()
+        allowed = {'applied', 'screened', 'interview', 'offer', 'hired', 'rejected'}
+        if new_stage not in allowed:
+            return jsonify({'error': 'Invalid stage'}), 400
+        application.stage = new_stage
+
+        # When hired, create/link a Candidate for downstream reference checks
+        if new_stage == 'hired' and not application.candidate_id:
+            # Best-effort parse resume into Candidate/Jobs
+            parsed = None
+            if application.resume_text:
+                parsed = parse_resume_with_claude(application.resume_text, ANTHROPIC_API_KEY) or {}
+            else:
+                parsed = {}
+
+            if not parsed.get('candidate_name'):
+                parsed['candidate_name'] = application.full_name
+            if not parsed.get('email'):
+                parsed['email'] = application.email
+            if not parsed.get('phone') and application.phone:
+                parsed['phone'] = application.phone
+
+            candidate = create_candidate_from_resume(
+                current_user.id,
+                parsed,
+                resume_text=application.resume_text or '',
+                resume_filename=application.resume_filename or '',
+            )
+            # Attach core metadata
+            candidate.position = posting.title
+            candidate.email = candidate.email or application.email
+            candidate.phone = candidate.phone or application.phone
+            db.session.commit()
+
+            application.candidate_id = candidate.id
+            db.session.commit()
+
+            log_audit(current_user.id, 'application_converted_to_candidate', 'candidate', candidate.id, {
+                'job_posting_id': posting.id,
+                'job_application_id': application.id,
+            })
+
+    if 'manual_status' in data:
+        application.manual_status = (data.get('manual_status') or '').strip() or None
+    if 'decision_notes' in data:
+        application.decision_notes = (data.get('decision_notes') or '').strip() or None
+
+    application.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    log_audit(current_user.id, 'job_application_updated', 'job_application', application.id, {
+        'job_posting_id': posting.id,
+        'stage': application.stage,
+    })
+
+    return jsonify({'success': True, 'application': application.to_dict()})
 
 
 # ============================================================================
@@ -1031,10 +1477,6 @@ def update_settings():
     return jsonify({'success': True})
 
 
-@app.route('/api/role-categories', methods=['GET'])
-def get_role_categories():
-    """Get available role categories for target role dropdown."""
-    return jsonify(ROLE_CATEGORIES)
 
 
 @app.route('/api/settings/password', methods=['POST'])

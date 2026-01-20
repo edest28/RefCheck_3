@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% if posting %}{{ posting.title }}{% else %}Job{% endif %} - Apply</title>
+  <style>
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #fafbfc;
+      --bg-tertiary: #f4f6f8;
+      --accent: #001aa3;
+      --accent-light: #2546ff;
+      --accent-bg: #eef2ff;
+      --success: #10b981;
+      --success-bg: #ecfdf5;
+      --danger: #ef4444;
+      --danger-bg: #fef2f2;
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --border: #e5e9f0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: var(--bg-secondary); color: var(--text-primary); }
+    .container { max-width: 1020px; margin: 0 auto; padding: 2rem 1rem; }
+    .grid { display:grid; grid-template-columns: 1.2fr 1fr; gap: 1.25rem; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: var(--bg-primary); border: 1px solid var(--border); border-radius: 12px; overflow:hidden; }
+    .card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); font-weight: 700; }
+    .card-body { padding: 1.5rem; }
+    .title { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
+    .meta { margin-top: 0.5rem; color: var(--text-muted); }
+    .jd { white-space: pre-wrap; color: var(--text-secondary); }
+    label { display:block; font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.4rem; }
+    input, select, textarea { width: 100%; padding: 0.75rem 0.9rem; border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.95rem; background: var(--bg-primary); }
+    textarea { min-height: 110px; resize: vertical; }
+    .row { display:grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
+    .form-group { margin-bottom: 1rem; }
+    .hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem; }
+    .btn { display:inline-flex; align-items:center; justify-content:center; width:100%; padding: 0.85rem 1rem; border-radius: 10px; border: none; background: var(--accent); color: white; font-weight: 700; cursor: pointer; }
+    .btn:hover { background: var(--accent-light); }
+    .alert { padding: 0.875rem 1rem; border-radius: 10px; margin-bottom: 1rem; }
+    .alert-error { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+    .alert-success { background: var(--success-bg); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    {% if error %}
+      <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+    {% if success %}
+      <div class="alert alert-success">Thanks for applying! Your application has been received.</div>
+    {% endif %}
+
+    {% if posting %}
+      <div style="margin-bottom: 1.25rem;">
+        <div class="title">{{ posting.title }}</div>
+        <div class="meta">{{ posting.department or '—' }} • {{ posting.location or '—' }} • {{ posting.employment_type or '—' }} • {{ posting.seniority or '—' }}</div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="card-header">Job Description</div>
+          <div class="card-body">
+            <div class="jd">
+              {% if posting.description_html %}
+                {{ posting.description_html }}
+              {% elif posting.description_raw %}
+                {{ posting.description_raw }}
+              {% else %}
+                No job description provided.
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Apply</div>
+          <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+              <div class="row">
+                <div class="form-group">
+                  <label for="full_name">Full Name *</label>
+                  <input id="full_name" name="full_name" required />
+                </div>
+                <div class="form-group">
+                  <label for="email">Email *</label>
+                  <input id="email" name="email" type="email" required />
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="form-group">
+                  <label for="phone">Phone</label>
+                  <input id="phone" name="phone" />
+                </div>
+                <div class="form-group">
+                  <label for="location">Location</label>
+                  <input id="location" name="location" placeholder="City, State/Province" />
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="form-group">
+                  <label for="linkedin_url">LinkedIn</label>
+                  <input id="linkedin_url" name="linkedin_url" placeholder="https://linkedin.com/in/..." />
+                </div>
+                <div class="form-group">
+                  <label for="portfolio_url">Portfolio</label>
+                  <input id="portfolio_url" name="portfolio_url" placeholder="https://..." />
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="form-group">
+                  <label for="salary_expectations_text">Salary expectations</label>
+                  <input id="salary_expectations_text" name="salary_expectations_text" placeholder="e.g., $160k–$200k" />
+                </div>
+                <div class="form-group">
+                  <label for="availability_text">Availability</label>
+                  <input id="availability_text" name="availability_text" placeholder="e.g., 2 weeks" />
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="form-group">
+                  <label for="work_country">Work country</label>
+                  <input id="work_country" name="work_country" placeholder="e.g., United States" />
+                </div>
+                <div class="form-group">
+                  <label for="work_authorization_status">Work authorization</label>
+                  <select id="work_authorization_status" name="work_authorization_status">
+                    <option value="">—</option>
+                    <option value="Citizen">Citizen</option>
+                    <option value="Permanent Resident">Permanent Resident</option>
+                    <option value="Visa Holder">Visa Holder</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="requires_sponsorship">Do you require sponsorship?</label>
+                <select id="requires_sponsorship" name="requires_sponsorship">
+                  <option value="no" selected>No</option>
+                  <option value="yes">Yes</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="resume">Resume *</label>
+                <input id="resume" name="resume" type="file" accept=".pdf,.doc,.docx,.txt" required />
+                <div class="hint">PDF, DOC, DOCX, or TXT</div>
+              </div>
+
+              <div class="form-group">
+                <label for="cover_letter_text">Cover letter (optional)</label>
+                <textarea id="cover_letter_text" name="cover_letter_text" placeholder="Anything you'd like us to know..."></textarea>
+              </div>
+
+              <button class="btn" type="submit">Submit application</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</body>
+</html>
+
