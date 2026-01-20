@@ -1,5 +1,21 @@
 [variables]
 NIXPACKS_PYTHON_VERSION = "3.11"
 
+# Force rebuild by changing phases
+[phases.setup]
+nixPkgs = ["python311", "gcc"]
+
+[phases.build]
+cmds = [
+    "pip install --upgrade pip",
+    "pip install -r requirements.txt",
+    "echo 'Build completed at:' $(date)",
+    "ls -la",
+    "echo '=== Contents of project root ==='",
+    "ls -la *.py || echo 'No .py files in root'",
+    "echo '=== refcheck_app package ==='",
+    "ls -la refcheck_app/ || echo 'No refcheck_app directory!'",
+]
+
 [start]
-cmd = "gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 2 --threads 4"
+cmd = "python -c 'import sys; print(sys.path); import refcheck_app; print(refcheck_app)' && gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 2 --threads 4"
