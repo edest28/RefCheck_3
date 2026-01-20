@@ -51,3 +51,4 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+app_legacy.py.bak
