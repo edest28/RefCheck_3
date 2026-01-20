@@ -13,7 +13,17 @@ def create_app(config_name='default'):
     import os
     import sys
     
-    # Debug: Print environment variable status
+    # Debug: Print ALL environment variables related to database
+    print(f"[APP INIT] === ENVIRONMENT VARIABLE DEBUG ===", file=sys.stderr)
+    for key in sorted(os.environ.keys()):
+        if 'DATABASE' in key.upper() or 'POSTGRES' in key.upper() or 'PG' in key.upper():
+            val = os.environ[key]
+            # Mask password in connection strings
+            if '@' in val:
+                val = val[:30] + '...[masked]'
+            print(f"[APP INIT] {key}={val}", file=sys.stderr)
+    print(f"[APP INIT] === END DEBUG ===", file=sys.stderr)
+    
     database_url = os.environ.get('DATABASE_URL')
     print(f"[APP INIT] DATABASE_URL from env: {database_url[:50] if database_url else 'NOT SET'}...", file=sys.stderr)
     print(f"[APP INIT] Config name: {config_name}", file=sys.stderr)
