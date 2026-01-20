@@ -14,18 +14,8 @@ def create_app(config_name='default'):
     from refcheck_app.extensions import login_manager, migrate
     from refcheck_app.models import db, User
     
-    # Debug: Print all environment variables containing DATABASE or POSTGRES
-    print(f"[APP INIT] Environment vars with DATABASE/POSTGRES:", file=sys.stderr)
-    for key, value in os.environ.items():
-        if 'DATABASE' in key.upper() or 'POSTGRES' in key.upper() or 'PG' in key.upper():
-            # Mask password in output
-            masked = value[:20] + '...' if len(value) > 20 else value
-            print(f"[APP INIT]   {key}={masked}", file=sys.stderr)
-    
-    # Debug: Print database configuration
+    # Get database URL from environment
     database_url = os.environ.get('DATABASE_URL')
-    print(f"[APP INIT] DATABASE_URL from env: {'SET' if database_url else 'NOT SET'}", file=sys.stderr)
-    print(f"[APP INIT] Config name: {config_name}", file=sys.stderr)
     
     # Set template folder to project root templates directory
     template_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'templates')
@@ -39,18 +29,12 @@ def create_app(config_name='default'):
     # before Railway injects environment variables
     if database_url:
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-        print(f"[APP INIT] Using DATABASE_URL from environment", file=sys.stderr)
     
     # Handle PostgreSQL URL format from Heroku/Railway
     if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
         app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace(
             'postgres://', 'postgresql://', 1
         )
-    
-    # Log final DB type (not the full URL for security)
-    db_uri = app.config['SQLALCHEMY_DATABASE_URI']
-    db_type = 'postgresql' if 'postgresql' in db_uri else 'sqlite' if 'sqlite' in db_uri else 'unknown'
-    print(f"[APP INIT] Final DB type: {db_type}", file=sys.stderr)
     
     # Initialize extensions
     db.init_app(app)
