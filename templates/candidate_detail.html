@@ -169,27 +169,6 @@
         </div>
     </div>
     
-    <!-- Target Role Card -->
-    <div class="card" style="margin-bottom: 1rem;">
-        <div class="card-header" style="cursor: pointer;" onclick="toggleTargetRoleCard()">
-            <span>Target Role <span id="target-role-summary" style="font-weight: 400; color: var(--text-muted); font-size: 0.85rem;"></span></span>
-            <span id="target-role-toggle">▼</span>
-        </div>
-        <div class="card-body" id="target-role-body" style="display: none;">
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Set the target role to customize reference questions for this specific position.</p>
-            <div class="form-group">
-                <label>Role Category</label>
-                <select id="target-role-category" onchange="saveTargetRole()">
-                    <option value="">-- Select Category --</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Role Details <span style="font-weight: 400; color: var(--text-muted);">(optional)</span></label>
-                <textarea id="target-role-details" rows="2" placeholder="e.g., Senior role, managing team of 5, ML/AI focus..." onblur="saveTargetRole()"></textarea>
-            </div>
-        </div>
-    </div>
-    
     <div class="tabs">
         <button class="tab active" onclick="showTab('references')">References</button>
         <button class="tab" onclick="showTab('jobs')">Work History</button>
@@ -233,6 +212,10 @@
     </div>
     
     <div class="tab-content" id="tab-summary">
+        <div class="card" style="margin-bottom: 1rem;">
+            <div class="card-header">Reference Summaries</div>
+            <div class="card-body" id="reference-summaries-section"></div>
+        </div>
         <div class="summary-grid">
             <div class="card">
                 <div class="card-header">Overall Score</div>
@@ -241,23 +224,17 @@
                 </div>
             </div>
             <div class="card">
-                <div class="card-header">Skills & Performance Radar</div>
-                <div class="card-body" style="display: flex; justify-content: center; align-items: center; min-height: 280px;">
-                    <canvas id="radar-chart" width="280" height="280" style="max-width: 100%;"></canvas>
-                </div>
-            </div>
-            <div class="card">
                 <div class="card-header">Verification Status</div>
                 <div class="card-body" id="verification-status-section"></div>
             </div>
-            <div class="card">
-                <div class="card-header">📈 Score Breakdown</div>
-                <div class="card-body" style="min-height: 200px;">
-                    <canvas id="score-breakdown-chart" height="180"></canvas>
-                </div>
+        </div>
+        <div class="card" style="margin-top: 1rem;">
+            <div class="card-header">📈 Score Breakdown</div>
+            <div class="card-body" style="min-height: 200px;">
+                <canvas id="score-breakdown-chart" height="180"></canvas>
             </div>
         </div>
-        <div class="summary-bottom-grid">
+        <div class="summary-bottom-grid" style="margin-top: 1rem;">
             <div class="card">
                 <div class="card-header">Positive Signals</div>
                 <div class="card-body" id="positive-signals-section"></div>
@@ -266,10 +243,6 @@
                 <div class="card-header">Discrepancies & Red Flags</div>
                 <div class="card-body" id="concerns-section"></div>
             </div>
-        </div>
-        <div class="card" style="margin-top: 1rem;">
-            <div class="card-header">Reference Summaries</div>
-            <div class="card-body" id="reference-summaries-section"></div>
         </div>
     </div>
 </div>
@@ -374,73 +347,7 @@ async function loadCandidate() {
         candidateData.references.forEach(ref => {
             if (ref.status === 'calling') startPolling(ref.id, ref.call_id);
         });
-        // Load role categories
-        loadRoleCategories();
     } catch (error) { console.error('Error:', error); }
-}
-
-async function loadRoleCategories() {
-    try {
-        const response = await fetch('/api/role-categories');
-        const categories = await response.json();
-        const select = document.getElementById('target-role-category');
-        select.innerHTML = '<option value="">-- Select Category --</option>';
-        categories.forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat;
-            option.textContent = cat;
-            if (candidateData.target_role_category === cat) option.selected = true;
-            select.appendChild(option);
-        });
-        // Set details
-        document.getElementById('target-role-details').value = candidateData.target_role_details || '';
-        // Update summary
-        updateTargetRoleSummary();
-    } catch (e) { console.error('Error loading categories:', e); }
-}
-
-function updateTargetRoleSummary() {
-    const cat = candidateData.target_role_category;
-    const details = candidateData.target_role_details;
-    const summary = document.getElementById('target-role-summary');
-    if (cat) {
-        summary.textContent = `— ${cat}${details ? ' • ' + details.substring(0, 30) + (details.length > 30 ? '...' : '') : ''}`;
-    } else {
-        summary.textContent = '— Not set';
-    }
-}
-
-function toggleTargetRoleCard() {
-    const body = document.getElementById('target-role-body');
-    const toggle = document.getElementById('target-role-toggle');
-    if (body.style.display === 'none') {
-        body.style.display = 'block';
-        toggle.textContent = '▲';
-    } else {
-        body.style.display = 'none';
-        toggle.textContent = '▼';
-    }
-}
-
-async function saveTargetRole() {
-    const category = document.getElementById('target-role-category').value;
-    const details = document.getElementById('target-role-details').value.trim();
-    
-    try {
-        const response = await fetch(`/api/candidates/${candidateId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                target_role_category: category || null,
-                target_role_details: details || null
-            })
-        });
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        candidateData.target_role_category = category;
-        candidateData.target_role_details = details;
-        updateTargetRoleSummary();
-    } catch (error) { console.error('Error saving target role:', error); }
 }
 
 function renderCandidate() {
@@ -739,73 +646,7 @@ function renderSummary() {
     }).join('');
     
     // Render charts
-    renderRadarChart(completedRefs, avgScore);
     renderScoreBreakdownChart(completedRefs);
-}
-
-function renderRadarChart(completedRefs, avgScore) {
-    const ctx = document.getElementById('radar-chart');
-    if (!ctx) return;
-    
-    // Destroy existing chart if any
-    if (window.radarChartInstance) {
-        window.radarChartInstance.destroy();
-    }
-    
-    // Calculate dimension scores (0-100 scale)
-    const allRedFlags = completedRefs.flatMap(r => r.red_flags || []).join(' ').toLowerCase();
-    const allPositive = completedRefs.flatMap(r => r.positive_signals || []);
-    const achievementsVerified = completedRefs.flatMap(r => r.achievements_verified || []).length;
-    const achievementsNotVerified = completedRefs.flatMap(r => r.achievements_not_verified || []).length;
-    
-    // Calculate dimension scores
-    const employmentScore = allRedFlags.includes('employment') ? 30 : avgScore >= 50 ? 90 : 60;
-    const skillsScore = achievementsVerified > achievementsNotVerified ? 85 : achievementsNotVerified > 0 ? 50 : 70;
-    const reliabilityScore = allRedFlags.includes('reliab') || allRedFlags.includes('inconsist') ? 40 : avgScore >= 60 ? 85 : 65;
-    const teamworkScore = allPositive.some(p => p.toLowerCase().includes('team')) ? 90 : avgScore >= 50 ? 75 : 55;
-    const rehireScore = allRedFlags.includes('not rehire') || allRedFlags.includes('would not') ? 25 : avgScore >= 70 ? 90 : 60;
-    
-    window.radarChartInstance = new Chart(ctx, {
-        type: 'radar',
-        data: {
-            labels: ['Employment Verified', 'Skills Confirmed', 'Reliability', 'Teamwork', 'Rehire Likelihood'],
-            datasets: [{
-                label: 'Reference Assessment',
-                data: [employmentScore, skillsScore, reliabilityScore, teamworkScore, rehireScore],
-                backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                borderColor: 'rgba(99, 102, 241, 1)',
-                borderWidth: 2,
-                pointBackgroundColor: 'rgba(99, 102, 241, 1)',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: 'rgba(99, 102, 241, 1)'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-                r: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: {
-                        stepSize: 25,
-                        font: { size: 10 },
-                        backdropColor: 'transparent'
-                    },
-                    pointLabels: {
-                        font: { size: 11, weight: '500' }
-                    },
-                    grid: {
-                        color: 'rgba(0,0,0,0.1)'
-                    }
-                }
-            },
-            plugins: {
-                legend: { display: false }
-            }
-        }
-    });
 }
 
 function renderScoreBreakdownChart(completedRefs) {

@@ -8,7 +8,7 @@ import re
 import json
 from datetime import datetime
 import requests
-from models import db, Candidate, Job, Reference, ResumeFile
+from models import db, Candidate, Job, Reference, ResumeFile, JobPosting, JobApplication
 
 
 # Default SMS template
@@ -131,6 +131,228 @@ Return ONLY the JSON object, no other text."""
         return json.loads(content)
     except Exception as e:
         print(f"Error parsing resume: {e}")
+        return None
+
+
+def generate_job_description_with_claude(
+    title,
+    department,
+    seniority,
+    location,
+    focus_areas,
+    company_name,
+    company_website,
+    api_key,
+):
+    """Generate a comprehensive job description using Claude.
+
+    Args:
+        focus_areas: User-provided bullet points or notes to expand into full JD
+        company_website: Optional company website URL
+
+    Returns dict:
+      {
+        "headline": str,
+        "summary": str,
+        "responsibilities": [str],
+        "requirements": [str],
+        "nice_to_haves": [str],
+        "benefits": [str],
+        "full_description": str  # Complete formatted JD text
+      }
+    """
+    if not api_key:
+        return {
+            "headline": f"{title} ({location or 'Remote'})",
+            "summary": f"Join {company_name or 'our team'} as a {seniority or ''} {title}.",
+            "responsibilities": [
+                "Ship high-quality features end-to-end",
+                "Collaborate cross-functionally with product and design",
+                "Own production reliability for your area",
+            ],
+            "requirements": [
+                "Relevant experience for the role",
+                "Strong communication and ownership",
+            ],
+            "nice_to_haves": [
+                "Experience in a high-growth environment",
+            ],
+            "benefits": [],
+            "full_description": "",
+        }
+
+    # Enhanced prompt that generates extensive JD from bullet points
+    prompt = f"""You are an expert job description writer. Create a comprehensive, professional job description based on the following information.
+
+Company: {company_name or 'N/A'}
+Company Website: {company_website or 'N/A'}
+Job Title: {title}
+Department: {department or 'N/A'}
+Seniority Level: {seniority or 'N/A'}
+Location: {location or 'N/A'}
+
+Key Points / Requirements (expand these into a full job description):
+{focus_areas or 'General role requirements'}
+
+Instructions:
+1. Write an engaging, professional job description that would attract top talent
+2. Expand the key points into detailed responsibilities (8-12 bullet points)
+3. Create comprehensive requirements (6-10 items) covering skills, experience, and qualifications
+4. Include nice-to-have qualifications (3-5 items)
+5. Add a benefits section if appropriate (4-6 items)
+6. Write a compelling 2-3 sentence summary/overview
+7. Create a professional headline
+
+Return ONLY valid JSON with this exact shape:
+{{
+  "headline": "Engaging headline for the role",
+  "summary": "2-3 sentence compelling overview of the role and company",
+  "responsibilities": ["Detailed responsibility 1", "Detailed responsibility 2", ...],
+  "requirements": ["Required skill/experience 1", "Required skill/experience 2", ...],
+  "nice_to_haves": ["Nice to have 1", "Nice to have 2", ...],
+  "benefits": ["Benefit 1", "Benefit 2", ...],
+  "full_description": "Complete formatted job description text ready to use (markdown format)"
+}}
+
+Make the description extensive, professional, and appealing to candidates. Expand on the key points provided to create a thorough job description."""
+    try:
+        response = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": "claude-3-5-haiku-20241022",
+                "max_tokens": 2000,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=60,
+        )
+        response.raise_for_status()
+        result = response.json()
+        content = result.get("content", [{}])[0].get("text", "{}")
+        json_match = re.search(r"\{[\s\S]*\}", content)
+        parsed = json.loads(json_match.group() if json_match else content)
+        
+        # If full_description wasn't provided, construct it from the parts
+        if "full_description" not in parsed or not parsed.get("full_description"):
+            parts = []
+            if parsed.get("headline"):
+                parts.append(f"# {parsed['headline']}\n")
+            if parsed.get("summary"):
+                parts.append(f"{parsed['summary']}\n")
+            if parsed.get("responsibilities"):
+                parts.append("\n## Responsibilities\n")
+                for r in parsed["responsibilities"]:
+                    parts.append(f"- {r}\n")
+            if parsed.get("requirements"):
+                parts.append("\n## Requirements\n")
+                for r in parsed["requirements"]:
+                    parts.append(f"- {r}\n")
+            if parsed.get("nice_to_haves"):
+                parts.append("\n## Nice to Have\n")
+                for n in parsed["nice_to_haves"]:
+                    parts.append(f"- {n}\n")
+            if parsed.get("benefits"):
+                parts.append("\n## Benefits\n")
+                for b in parsed["benefits"]:
+                    parts.append(f"- {b}\n")
+            parsed["full_description"] = "".join(parts)
+        
+        return parsed
+    except Exception as e:
+        print(f"Error generating job description: {e}")
+        return None
+
+
+def analyze_application_with_claude(job_posting, application, api_key):
+    """Score an application against a job posting.
+
+    Returns dict:
+      {
+        "score": int,
+        "score_label": "strong|mixed|weak",
+        "summary": str,
+        "strengths": [str],
+        "risks": [str],
+        "missing_requirements": [str]
+      }
+    """
+    if not api_key:
+        # Deterministic-ish fallback for local dev.
+        score = 70 if (application.resume_text or "") else 40
+        return {
+            "score": score,
+            "score_label": "strong" if score >= 75 else "mixed" if score >= 55 else "weak",
+            "summary": "Mock screening result (no AI key configured).",
+            "strengths": [],
+            "risks": [],
+            "missing_requirements": [],
+        }
+
+    jd_text = (job_posting.description_raw or "") + "\n" + (job_posting.description_html or "")
+    resume_text = application.resume_text or ""
+    answers = {
+        "location": application.location,
+        "linkedin_url": application.linkedin_url,
+        "portfolio_url": application.portfolio_url,
+        "salary_expectations_text": application.salary_expectations_text,
+        "availability_text": application.availability_text,
+        "work_country": application.work_country,
+        "work_authorization_status": application.work_authorization_status,
+        "requires_sponsorship": application.requires_sponsorship,
+    }
+
+    prompt = f"""You are an applicant screening assistant.
+Score the applicant from 0-100 based on fit for the job description.
+
+Return ONLY valid JSON with this exact shape:
+{{
+  "score": 0,
+  "score_label": "strong|mixed|weak",
+  "summary": "2-3 sentences",
+  "strengths": ["..."],
+  "risks": ["..."],
+  "missing_requirements": ["..."]
+}}
+
+Job title: {job_posting.title}
+Job description:
+{jd_text}
+
+Applicant:
+Name: {application.full_name}
+Email: {application.email}
+Answers (JSON):
+{json.dumps(answers)}
+
+Resume text:
+{resume_text[:15000]}
+"""
+    try:
+        response = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": "claude-sonnet-4-20250514",
+                "max_tokens": 1500,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=60,
+        )
+        response.raise_for_status()
+        result = response.json()
+        content = result.get("content", [{}])[0].get("text", "{}")
+        json_match = re.search(r"\{[\s\S]*\}", content)
+        return json.loads(json_match.group() if json_match else content)
+    except Exception as e:
+        print(f"Error screening application: {e}")
         return None
 
 
