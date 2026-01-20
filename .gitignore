@@ -52,3 +52,4 @@ ENV/
 .DS_Store
 Thumbs.db
 app_legacy.py.bak
+# Force rebuild Tue Jan 20 12:30:23 EST 2026
