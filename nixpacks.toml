@@ -1,8 +1,5 @@
 [variables]
 NIXPACKS_PYTHON_VERSION = "3.11"
 
-[phases.build]
-cmds = ["echo 'Build timestamp: 2026-01-20-v2' && pip install -r requirements.txt"]
-
 [start]
-cmd = "python -c \"import sys; print('Python path:', sys.path); import os; print('Files in /app:', os.listdir('/app'))\" && gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 2 --threads 4"
+cmd = "gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 2 --threads 4"
