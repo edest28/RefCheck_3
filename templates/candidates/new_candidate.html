@@ -1,0 +1,709 @@
+{% extends "base.html" %}
+{% block title %}Add New Candidate - RefCheck AI{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .page-header { margin-bottom: 2.5rem; }
+    .page-title { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+    .page-subtitle { color: var(--text-secondary); font-size: 0.9375rem; }
+
+    .steps { display: flex; gap: 0.75rem; margin-bottom: 2.5rem; }
+    .step { display: flex; align-items: center; gap: 0.625rem; padding: 0.625rem 1.125rem; border-radius: 100px; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; background: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border-light); }
+    .step.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .step.completed { background: var(--success-bg); color: var(--success); border-color: var(--success); }
+    .step-number { width: 22px; height: 22px; border-radius: 50%; background: currentColor; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; }
+    .step.active .step-number { background: rgba(255,255,255,0.25); }
+    .step.completed .step-number { background: var(--success); }
+
+    .card-title { font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.625rem; }
+    .card-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 1.125rem; }
+    
+    .file-upload { border: 2px dashed var(--border); border-radius: 12px; padding: 2.5rem; text-align: center; cursor: pointer; transition: all 0.2s ease; background: var(--bg-secondary); }
+    .file-upload:hover { border-color: var(--accent); background: var(--accent-bg); }
+    .file-upload.dragover { border-color: var(--accent); background: var(--accent-bg); }
+    .file-upload-icon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.5; }
+    .file-upload-text { color: var(--text-secondary); font-size: 0.9375rem; font-weight: 500; }
+    .file-input { display: none; }
+
+    .selected-file { display: flex; align-items: center; gap: 0.875rem; padding: 0.875rem 1.125rem; background: var(--accent-bg); border: 1px solid var(--accent); border-radius: 8px; margin-top: 1rem; }
+    .selected-file-name { flex: 1; font-weight: 500; font-size: 0.9375rem; color: var(--accent-dark); }
+    .selected-file-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5rem; line-height: 1; transition: color 0.2s; }
+    .selected-file-remove:hover { color: var(--danger); }
+    
+    .btn-group { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+    
+    .jobs-list { display: flex; flex-direction: column; gap: 1.5rem; }
+    .job-card { border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--bg-primary); }
+    .job-header { padding: 1.25rem 1.5rem; background: var(--bg-secondary); border-bottom: 1.5px solid var(--border-light); display: flex; justify-content: space-between; align-items: flex-start; }
+    .job-company { font-weight: 600; font-size: 1rem; letter-spacing: -0.01em; }
+    .job-title { color: var(--text-secondary); font-size: 0.9375rem; margin-top: 0.125rem; }
+    .job-dates { font-size: 0.8125rem; color: var(--text-muted); background: var(--bg-primary); padding: 0.375rem 0.625rem; border-radius: 6px; font-weight: 500; }
+    .job-body { padding: 1.5rem; }
+    .job-section { margin-bottom: 1.5rem; }
+    .job-section:last-child { margin-bottom: 0; }
+    .job-section-title { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.075em; color: var(--text-muted); margin-bottom: 0.625rem; font-weight: 600; }
+    .job-item { display: flex; gap: 0.625rem; margin-bottom: 0.5rem; font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.5; }
+    .job-item-icon { flex-shrink: 0; margin-top: 0.125rem; }
+    .job-item-icon.resp { color: var(--accent); }
+    .job-item-icon.ach { color: var(--success); }
+    
+    .reference-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1.5px solid var(--border-light); }
+    .reference-section-title { font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.625rem; }
+    .reference-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem; }
+    .reference-item { display: flex; align-items: center; gap: 1rem; padding: 0.875rem 1.125rem; background: var(--bg-secondary); border-radius: 8px; border: 1.5px solid var(--border); animation: slideIn 0.3s ease-out; }
+    .reference-item.success { background: var(--success-bg); border-color: var(--success); }
+    .reference-success-icon { color: var(--success); font-size: 1.25rem; }
+    .reference-info { flex: 1; }
+    .reference-name { font-weight: 500; font-size: 0.9375rem; letter-spacing: -0.01em; }
+    .reference-phone { font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.125rem; }
+    .reference-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0.375rem; transition: color 0.2s; }
+    .reference-remove:hover { color: var(--danger); }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .add-reference-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .add-reference-form input, .add-reference-form select { font-size: 0.9375rem; }
+    .add-reference-btn { grid-column: span 2; border: 1.5px solid var(--accent) !important; color: var(--accent) !important; background: white !important; font-weight: 500 !important; }
+    .add-reference-btn:hover { background: var(--accent-bg) !important; transform: translateY(-1px) !important; }
+    @media (max-width: 640px) { .add-reference-form { grid-template-columns: 1fr; } .add-reference-btn { grid-column: span 1; } }
+    
+    .custom-questions { margin-top: 1rem; }
+    .custom-questions textarea { min-height: 80px; font-size: 0.85rem; }
+    
+    .action-footer { position: sticky; bottom: 0; background: var(--bg-primary); border-top: 1.5px solid var(--border); padding: 1.25rem 2rem; margin: 2rem -2rem -2rem; display: flex; justify-content: space-between; align-items: center; }
+
+    .success-card { text-align: center; padding: 3rem; }
+    .success-icon { font-size: 3.5rem; margin-bottom: 1.25rem; }
+
+    /* Modal Styles */
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; display: flex; align-items: center; justify-content: center; }
+    .modal.hidden { display: none; }
+    .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(2px); }
+    .modal-content { position: relative; background: var(--bg-primary); border-radius: 12px; max-width: 700px; max-height: 85vh; width: 90%; display: flex; flex-direction: column; }
+    .modal-header { padding: 1.75rem 2rem; border-bottom: 1.5px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; }
+    .modal-header h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+    .modal-close { background: none; border: none; font-size: 1.75rem; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 0; width: 36px; height: 36px; border-radius: 6px; transition: all 0.2s; }
+    .modal-close:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+    .modal-body { padding: 2rem; overflow-y: auto; flex: 1; }
+    .modal-footer { padding: 1.5rem 2rem; border-top: 1.5px solid var(--border-light); display: flex; gap: 0.75rem; justify-content: flex-end; background: var(--bg-secondary); }
+
+    .question-section { margin-bottom: 2rem; }
+    .question-section:last-child { margin-bottom: 0; }
+    .question-section-title { font-size: 0.8125rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.075em; margin-bottom: 1rem; }
+    .question-item { margin-bottom: 1.25rem; }
+    .question-item:last-child { margin-bottom: 0; }
+    .question-label { display: block; font-size: 0.8125rem; font-weight: 500; color: var(--text-primary); margin-bottom: 0.5rem; letter-spacing: -0.01em; }
+    .question-input { width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9375rem; font-family: inherit; transition: all 0.2s; }
+    .question-input:hover { border-color: var(--border-focus); }
+    .question-input:focus { outline: none; border-color: var(--accent); }
+    .question-type { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.375rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Add New Candidate</h1>
+    <p class="page-subtitle">Upload a resume and configure reference checks</p>
+</div>
+
+<div class="steps">
+    <div class="step active" id="step1-indicator"><span class="step-number">1</span> Upload Resume</div>
+    <div class="step" id="step2-indicator"><span class="step-number">2</span> Add References</div>
+    <div class="step" id="step3-indicator"><span class="step-number">3</span> Start Outreach</div>
+</div>
+
+<!-- Step 1: Upload Resume -->
+<section id="step1">
+    <div class="card">
+        <div class="card-body">
+            <div class="card-title"><span class="card-icon"></span> Candidate Information</div>
+            
+            <div class="form-group">
+                <label for="candidate-name">Candidate Name (optional)</label>
+                <input type="text" id="candidate-name" placeholder="Will be extracted from resume">
+            </div>
+            
+            <div class="form-group">
+                <label>Resume Upload *</label>
+                <div class="file-upload" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                    <div class="file-upload-icon"></div>
+                    <p class="file-upload-text">Drop resume here or click to browse</p>
+                    <p class="hint">PDF, DOC, DOCX, or TXT (max 16MB)</p>
+                </div>
+                <input type="file" id="file-input" class="file-input" accept=".pdf,.doc,.docx,.txt">
+                <div id="selected-file" class="selected-file hidden">
+                    <span></span>
+                    <span class="selected-file-name" id="selected-file-name"></span>
+                    <button class="selected-file-remove" onclick="clearFile()">×</button>
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" id="parse-btn" onclick="parseResume()">Parse Resume →</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Step 2: Add References -->
+<section id="step2" class="hidden">
+    <div class="card mb-2">
+        <div class="card-body">
+            <div class="card-title">
+                <span class="card-icon"></span>
+                <span id="candidate-display-name">Candidate Name</span>
+            </div>
+            <p id="candidate-summary" style="color: var(--text-secondary); font-size: 0.9rem;"></p>
+        </div>
+    </div>
+    
+    <div class="card mb-2">
+        <div class="card-body">
+            <div class="card-title"><span class="card-icon"></span> Work History & References</div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Add at least one reference for each role. You can also add custom questions.</p>
+            <div class="jobs-list" id="jobs-list"></div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="card-title"><span class="card-icon"></span> SMS Follow-up Template</div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">If a reference doesn't answer, this message will be sent via SMS.</p>
+            <div class="form-group">
+                <label for="sms-template">SMS Message</label>
+                <textarea id="sms-template">{{ sms_template }}</textarea>
+                <p class="hint">Variables: {candidate_first_name}, {candidate_last_name}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="action-footer">
+        <button class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
+        <button class="btn btn-primary" onclick="continueToStep3()">Continue</button>
+    </div>
+</section>
+
+<!-- Step 3: Ready to Start -->
+<section id="step3" class="hidden">
+    <div class="card">
+        <div class="card-body">
+            <div class="card-title">Ready to Begin Reference Checks</div>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Your candidate has been saved with <span id="ref-count">0</span> reference(s).
+                You can start outreach now or come back later to manage references.
+            </p>
+
+            <div class="btn-group">
+                <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-secondary">← Back to Dashboard</a>
+                <a href="" class="btn btn-secondary" id="view-candidate-link">View Candidate</a>
+                <button class="btn btn-primary" id="start-outreach-btn" onclick="startOutreach()">Start Reference Outreach</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Survey Preview Modal -->
+<div id="survey-modal" class="modal hidden">
+    <div class="modal-overlay" onclick="closeSurveyModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Survey Questions Preview</h3>
+            <button class="modal-close" onclick="closeSurveyModal()">×</button>
+        </div>
+        <div class="modal-body" id="survey-modal-body">
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                These questions will be sent if you select email survey as the contact method. You can edit any question.
+            </p>
+            <div id="survey-questions-container"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeSurveyModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveSurveyQuestions()">Save Questions</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let candidateId = null;
+    let candidateData = null;
+    let selectedFile = null;
+    
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault(); dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) handleFileSelect(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) handleFileSelect(e.target.files[0]);
+    });
+    
+    function handleFileSelect(file) {
+        if (!file.name.match(/\.(pdf|txt|doc|docx)$/i)) { alert('Please upload a PDF, DOC, DOCX, or TXT file'); return; }
+        selectedFile = file;
+        document.getElementById('selected-file').classList.remove('hidden');
+        document.getElementById('selected-file-name').textContent = file.name;
+        dropZone.style.display = 'none';
+    }
+    
+    function clearFile() {
+        selectedFile = null; fileInput.value = '';
+        document.getElementById('selected-file').classList.add('hidden');
+        dropZone.style.display = 'block';
+    }
+    
+    function goToStep(step) {
+        document.getElementById('step1').classList.toggle('hidden', step !== 1);
+        document.getElementById('step2').classList.toggle('hidden', step !== 2);
+        document.getElementById('step3').classList.toggle('hidden', step !== 3);
+        document.getElementById('step1-indicator').className = `step ${step === 1 ? 'active' : step > 1 ? 'completed' : ''}`;
+        document.getElementById('step2-indicator').className = `step ${step === 2 ? 'active' : step > 2 ? 'completed' : ''}`;
+        document.getElementById('step3-indicator').className = `step ${step === 3 ? 'active' : ''}`;
+    }
+    
+    async function parseResume() {
+        const candidateName = document.getElementById('candidate-name').value.trim();
+        const smsTemplate = document.getElementById('sms-template').value;
+
+        if (!selectedFile) { alert('Please upload a resume'); return; }
+
+        const btn = document.getElementById('parse-btn');
+        btn.disabled = true;
+
+        // Show progressive loading messages
+        const messages = [
+            'Extracting text from resume...',
+            'Analyzing work experience...',
+            'Identifying key achievements...',
+            'Almost done...'
+        ];
+
+        let messageIndex = 0;
+        btn.innerHTML = `<span class="spinner"></span> ${messages[0]}`;
+
+        const messageInterval = setInterval(() => {
+            messageIndex = (messageIndex + 1) % messages.length;
+            btn.innerHTML = `<span class="spinner"></span> ${messages[messageIndex]}`;
+        }, 2000); // Rotate message every 2 seconds
+
+        try {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('sms_template', smsTemplate);
+            if (candidateName) formData.append('candidate_name', candidateName);
+
+            const response = await fetch('/api/candidates', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            candidateId = data.candidate_id;
+            candidateData = data.candidate;
+            renderStep2();
+            goToStep(2);
+        } catch (error) {
+            alert('Error: ' + error.message);
+        } finally {
+            clearInterval(messageInterval);
+            btn.disabled = false;
+            btn.innerHTML = 'Parse Resume →';
+        }
+    }
+    
+    function renderStep2() {
+        document.getElementById('candidate-display-name').textContent = candidateData.name;
+        document.getElementById('candidate-summary').textContent = candidateData.summary || '';
+        
+        const container = document.getElementById('jobs-list');
+        container.innerHTML = candidateData.jobs.map((job, index) => `
+            <div class="job-card" data-index="${index}">
+                <div class="job-header">
+                    <div>
+                        <div class="job-company">${escapeHtml(job.company)}</div>
+                        <div class="job-title">${escapeHtml(job.title)}</div>
+                    </div>
+                    <div class="job-dates">${escapeHtml(job.dates)}</div>
+                </div>
+                <div class="job-body">
+                    ${job.responsibilities?.length ? `<div class="job-section"><div class="job-section-title">Responsibilities</div>${job.responsibilities.map(r => `<div class="job-item"><span class="job-item-icon resp"></span><span>${escapeHtml(r)}</span></div>`).join('')}</div>` : ''}
+                    ${job.achievements?.length ? `<div class="job-section"><div class="job-section-title">Achievements</div>${job.achievements.map(a => `<div class="job-item"><span class="job-item-icon ach"></span><span>${escapeHtml(a)}</span></div>`).join('')}</div>` : ''}
+                    <div class="reference-section">
+                        <div class="reference-section-title"><span></span> References for this role</div>
+                        <div class="reference-list" id="refs-${index}"><p style="color: var(--text-muted); font-size: 0.85rem;">No references added yet</p></div>
+                        <div class="add-reference-form" style="grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <input type="text" id="ref-name-${index}" placeholder="Reference name *">
+                            <select id="ref-relationship-${index}">
+                                <option value="">Relationship...</option>
+                                <option value="Manager">Manager</option>
+                                <option value="Direct Supervisor">Direct Supervisor</option>
+                                <option value="Colleague">Colleague</option>
+                                <option value="Direct Report">Direct Report</option>
+                                <option value="Client">Client</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <input type="tel" id="ref-phone-${index}" placeholder="Phone (optional)">
+                            <input type="email" id="ref-email-${index}" placeholder="Email (optional)">
+                            <select id="ref-contact-method-${index}">
+                                <option value="survey_only">Email Survey Only</option>
+                                <option value="call_only">Phone Call Only</option>
+                                <option value="call_and_survey">Both Call & Survey</option>
+                            </select>
+                            <button class="btn btn-secondary btn-sm" onclick="previewSurvey(${index})" id="preview-btn-${index}" disabled>Generate & Preview Survey Questions</button>
+                            <button class="btn btn-secondary btn-sm add-reference-btn" onclick="addReference(${index})" style="grid-column: span 2;">+ Add Reference</button>
+                        </div>
+                        <div class="custom-questions">
+                            <label for="custom-q-${index}">Custom Questions (optional)</label>
+                            <textarea id="custom-q-${index}" placeholder="Add specific questions for the AI to ask. One per line."></textarea>
+                            <p class="hint">These will be asked in addition to standard verification questions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        // Add event listeners to enable preview button when name is filled
+        candidateData.jobs.forEach((job, index) => {
+            const nameInput = document.getElementById(`ref-name-${index}`);
+            nameInput.addEventListener('input', () => {
+                const previewBtn = document.getElementById(`preview-btn-${index}`);
+                previewBtn.disabled = !nameInput.value.trim();
+            });
+        });
+    }
+    
+    async function addReference(jobIndex) {
+        const name = document.getElementById(`ref-name-${jobIndex}`).value.trim();
+        const phone = document.getElementById(`ref-phone-${jobIndex}`).value.trim();
+        const email = document.getElementById(`ref-email-${jobIndex}`).value.trim();
+        const relationship = document.getElementById(`ref-relationship-${jobIndex}`).value;
+        const contactMethod = document.getElementById(`ref-contact-method-${jobIndex}`).value;
+        const customQInput = document.getElementById(`custom-q-${jobIndex}`);
+        const customQuestions = customQInput.value.trim().split('\n').filter(q => q.trim());
+
+        // Validation: name is required
+        if (!name) {
+            alert('Please enter the reference name');
+            return;
+        }
+
+        // Validation: at least phone OR email required
+        if (!phone && !email) {
+            alert('Please provide either a phone number or email address');
+            return;
+        }
+
+        // Validation: contact method must match available contact info
+        if ((contactMethod === 'call_only' || contactMethod === 'call_and_survey') && !phone) {
+            alert('Phone number is required for call-based contact methods');
+            return;
+        }
+        if ((contactMethod === 'survey_only' || contactMethod === 'call_and_survey') && !email) {
+            alert('Email address is required for survey-based contact methods');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/candidates/${candidateId}/references`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    reference_name: name,
+                    reference_phone: phone || null,
+                    reference_email: email || null,
+                    relationship: relationship || null,
+                    contact_method: contactMethod,
+                    job_index: jobIndex,
+                    custom_questions: customQuestions
+                })
+            });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            if (!candidateData.references) candidateData.references = [];
+            candidateData.references.push(data.reference);
+
+            // Mark this reference as the last added one for success highlight
+            const container = document.getElementById(`refs-${jobIndex}`);
+            container.dataset.lastAddedId = data.reference.id;
+
+            renderReferences(jobIndex);
+
+            // Clear form
+            document.getElementById(`ref-name-${jobIndex}`).value = '';
+            document.getElementById(`ref-phone-${jobIndex}`).value = '';
+            document.getElementById(`ref-email-${jobIndex}`).value = '';
+            document.getElementById(`ref-relationship-${jobIndex}`).selectedIndex = 0;
+            document.getElementById(`ref-contact-method-${jobIndex}`).selectedIndex = 0;
+        } catch (error) { alert('Error: ' + error.message); }
+    }
+    
+    function renderReferences(jobIndex) {
+        const refs = (candidateData.references || []).filter(r => {
+            const jobs = candidateData.jobs;
+            const jobId = jobs[jobIndex]?.id;
+            return r.job_id === jobId || (!r.job_id && jobIndex === 0);
+        });
+        const container = document.getElementById(`refs-${jobIndex}`);
+        
+        if (refs.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No references added yet</p>';
+            return;
+        }
+        
+        container.innerHTML = refs.map((ref, idx) => {
+            const contactInfo = [];
+            if (ref.phone) contactInfo.push(escapeHtml(ref.phone));
+            if (ref.email) contactInfo.push(escapeHtml(ref.email));
+            const contactMethodLabel = {
+                'call_only': 'Phone Call',
+                'survey_only': 'Email Survey',
+                'call_and_survey': 'Call & Survey'
+            }[ref.contact_method] || 'Email Survey';
+
+            const isNew = ref.id === container.dataset.lastAddedId;
+            const successClass = isNew ? 'success' : '';
+
+            return `
+                <div class="reference-item ${successClass}" id="ref-${ref.id}">
+                    <span class="reference-success-icon"></span>
+                    <div class="reference-info">
+                        <div class="reference-name">${escapeHtml(ref.name)}${ref.relationship ? ` (${escapeHtml(ref.relationship)})` : ''}</div>
+                        <div class="reference-phone">${contactInfo.join(' • ')} • ${contactMethodLabel}</div>
+                    </div>
+                    <button class="reference-remove" onclick="removeReference('${ref.id}', ${jobIndex})">×</button>
+                </div>
+            `;
+        }).join('');
+
+        // Remove success highlight after animation
+        setTimeout(() => {
+            container.querySelectorAll('.reference-item.success').forEach(el => {
+                el.classList.remove('success');
+            });
+            container.dataset.lastAddedId = '';
+        }, 2000);
+    }
+    
+    async function removeReference(refId, jobIndex) {
+        try {
+            await fetch(`/api/candidates/${candidateId}/references/${refId}`, {
+                method: 'DELETE',
+                credentials: 'same-origin'
+            });
+            candidateData.references = candidateData.references.filter(r => r.id !== refId);
+            renderReferences(jobIndex);
+        } catch (error) { alert('Error: ' + error.message); }
+    }
+    
+    async function continueToStep3() {
+        // Save SMS template
+        const smsTemplate = document.getElementById('sms-template').value;
+        await fetch(`/api/candidates/${candidateId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ sms_template: smsTemplate })
+        });
+
+        // Update step 3 with reference count and links
+        const refCount = (candidateData.references || []).length;
+        document.getElementById('ref-count').textContent = refCount;
+        document.getElementById('view-candidate-link').href = `/candidate/${candidateId}`;
+
+        // Go to step 3 without starting outreach
+        goToStep(3);
+    }
+
+    async function startOutreach() {
+        const refs = candidateData.references || [];
+        if (refs.length === 0) {
+            alert('Please add at least one reference before starting outreach');
+            return;
+        }
+
+        const btn = document.getElementById('start-outreach-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Starting...';
+
+        try {
+            const response = await fetch(`/api/candidates/${candidateId}/start-outreach`, {
+                method: 'POST',
+                credentials: 'same-origin'
+            });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            // Show success and redirect to candidate page
+            alert('Reference outreach started! Redirecting to candidate details...');
+            window.location.href = `/candidate/${candidateId}`;
+        } catch (error) {
+            alert('Error: ' + error.message);
+            btn.disabled = false;
+            btn.innerHTML = 'Start Reference Outreach';
+        }
+    }
+
+    // Survey Preview Modal Functions
+    let currentJobIndex = null;
+    let surveyQuestions = [];
+    let cachedQuestions = {}; // Cache questions per job to avoid regenerating
+
+    async function previewSurvey(jobIndex) {
+        console.log('previewSurvey called for job index:', jobIndex);
+
+        const name = document.getElementById(`ref-name-${jobIndex}`).value.trim();
+        console.log('Reference name:', name);
+
+        if (!name) {
+            alert('Please enter the reference name first');
+            return;
+        }
+
+        currentJobIndex = jobIndex;
+
+        // Check if we have cached questions for this job
+        if (cachedQuestions[jobIndex]) {
+            console.log('Using cached questions for job', jobIndex);
+            surveyQuestions = cachedQuestions[jobIndex];
+            renderSurveyModal();
+            document.getElementById('survey-modal').classList.remove('hidden');
+            return;
+        }
+
+        // Otherwise generate new questions
+        const btn = document.getElementById(`preview-btn-${jobIndex}`);
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+        try {
+            const job = candidateData.jobs[jobIndex];
+            console.log('Job data:', job);
+
+            const requestBody = {
+                candidate_name: name,
+                job_title: job.title,
+                job_company: job.company,
+                job_dates: job.dates,
+                responsibilities: job.responsibilities || [],
+                achievements: job.achievements || []
+            };
+            console.log('Sending request:', requestBody);
+
+            // Call API to generate questions (this will generate AI questions)
+            const response = await fetch(`/api/generate-survey-questions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify(requestBody)
+            });
+
+            console.log('Response status:', response.status);
+            const data = await response.json();
+            console.log('Response data:', data);
+
+            if (data.error) throw new Error(data.error);
+
+            surveyQuestions = data.questions || [];
+            cachedQuestions[jobIndex] = surveyQuestions; // Cache for this job
+            console.log('Survey questions generated and cached:', surveyQuestions);
+
+            renderSurveyModal();
+            document.getElementById('survey-modal').classList.remove('hidden');
+        } catch (error) {
+            console.error('Error in previewSurvey:', error);
+            alert('Error generating questions: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    }
+
+    function renderSurveyModal() {
+        const container = document.getElementById('survey-questions-container');
+
+        // Group questions by type
+        const standardQuestions = surveyQuestions.filter(q => q.type === 'standardized');
+        const aiQuestions = surveyQuestions.filter(q => q.type === 'ai_generated');
+
+        let html = '';
+
+        // Standard questions
+        if (standardQuestions.length > 0) {
+            html += '<div class="question-section">';
+            html += '<div class="question-section-title">Standard Questions (' + standardQuestions.length + ')</div>';
+            standardQuestions.forEach((q, idx) => {
+                html += `
+                    <div class="question-item">
+                        <label class="question-label">${idx + 1}. Question</label>
+                        <input type="text" class="question-input" data-index="${q.index}" value="${escapeHtml(q.question)}">
+                        <div class="question-type">${q.answer_type || 'Text response'}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        }
+
+        // AI-generated questions
+        if (aiQuestions.length > 0) {
+            html += '<div class="question-section">';
+            html += '<div class="question-section-title">AI-Generated Questions (' + aiQuestions.length + ')</div>';
+            aiQuestions.forEach((q, idx) => {
+                html += `
+                    <div class="question-item">
+                        <label class="question-label">${idx + 1}. Question</label>
+                        <input type="text" class="question-input" data-index="${q.index}" value="${escapeHtml(q.question)}">
+                        <div class="question-type">${q.answer_type || 'Text response'}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        }
+
+        container.innerHTML = html;
+    }
+
+    function closeSurveyModal() {
+        document.getElementById('survey-modal').classList.add('hidden');
+        currentJobIndex = null;
+        surveyQuestions = [];
+    }
+
+    function saveSurveyQuestions() {
+        // Get all edited question values
+        const inputs = document.querySelectorAll('#survey-questions-container .question-input');
+        const editedQuestions = Array.from(inputs).map((input, idx) => input.value.trim()).filter(q => q);
+
+        if (currentJobIndex !== null) {
+            // Update cached questions with edited values
+            surveyQuestions.forEach((q, idx) => {
+                if (inputs[idx]) {
+                    q.question = inputs[idx].value.trim();
+                }
+            });
+            cachedQuestions[currentJobIndex] = [...surveyQuestions];
+
+            // Save to custom questions field (will replace all questions as per requirement)
+            const customQTextarea = document.getElementById(`custom-q-${currentJobIndex}`);
+            customQTextarea.value = editedQuestions.join('\n');
+        }
+
+        closeSurveyModal();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

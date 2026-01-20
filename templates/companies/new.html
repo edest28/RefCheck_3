@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}New Company - RefCheck AI{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+  <a href="{{ url_for('companies.list_companies') }}" style="color: var(--text-muted); font-size: 0.9rem;">← Back to Companies</a>
+  <h1 style="font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; margin-top: 0.5rem;">Create Company</h1>
+  <p style="color: var(--text-secondary);">Create a company profile to organize your job postings.</p>
+</div>
+
+<form method="POST" action="{{ url_for('companies.create_company') }}">
+  <div class="card">
+    <div class="card-header">Company details</div>
+    <div class="card-body">
+      <div class="form-group">
+        <label for="name">Company Name *</label>
+        <input id="name" name="name" placeholder="e.g., Acme Corp" required />
+      </div>
+
+      <div class="form-group">
+        <label for="website">Company Website</label>
+        <input id="website" name="website" type="url" placeholder="https://example.com" />
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="4" placeholder="Brief description of your company..."></textarea>
+      </div>
+
+      <div style="display:flex; gap: 0.75rem; justify-content: flex-end;">
+        <a class="btn btn-secondary" href="{{ url_for('companies.list_companies') }}">Cancel</a>
+        <button class="btn btn-primary" type="submit">Create Company</button>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
