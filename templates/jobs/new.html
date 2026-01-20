@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}New Job - RefCheck AI{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+  {% if company %}
+    <a href="{{ url_for('companies.view_company', company_id=company.id) }}" style="color: var(--text-muted); font-size: 0.9rem;">← Back to {{ company.name }}</a>
+  {% else %}
+    <a href="{{ url_for('jobs.jobs') }}" style="color: var(--text-muted); font-size: 0.9rem;">← Back to Jobs</a>
+  {% endif %}
+  <h1 style="font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; margin-top: 0.5rem;">Create Job</h1>
+  {% if company %}
+    <p style="color: var(--text-secondary);">Creating job for <strong>{{ company.name }}</strong>. Start with the essentials. You can refine and publish later.</p>
+  {% else %}
+    <p style="color: var(--text-secondary);">Start with the essentials. You can refine and publish later.</p>
+  {% endif %}
+</div>
+
+<form method="POST" action="{{ url_for('jobs.create_job', company_id=company.id) }}">
+  <div class="card">
+    <div class="card-header">Job details</div>
+    <div class="card-body">
+      {% if company %}
+        <div class="form-group">
+          <label>Company</label>
+          <div style="padding: 0.75rem 1rem; background: var(--bg-secondary); border-radius: 8px; color: var(--text-primary);">
+            <strong>{{ company.name }}</strong>
+            {% if company.website %}
+              <br><small style="color: var(--text-muted);"><a href="{{ company.website }}" target="_blank">{{ company.website }}</a></small>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="title">Job Title *</label>
+          <input id="title" name="title" placeholder="e.g., Senior Software Engineer" required />
+        </div>
+        <div class="form-group">
+          <label for="department">Department</label>
+          <input id="department" name="department" placeholder="e.g., Engineering" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="location">Location</label>
+          <input id="location" name="location" placeholder="e.g., San Francisco, CA (Remote OK)" />
+        </div>
+        <div class="form-group">
+          <label for="employment_type">Employment Type</label>
+          <select id="employment_type" name="employment_type">
+            <option value="">—</option>
+            <option value="Full-time">Full-time</option>
+            <option value="Part-time">Part-time</option>
+            <option value="Contract">Contract</option>
+            <option value="Internship">Internship</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="seniority">Seniority</label>
+          <input id="seniority" name="seniority" placeholder="e.g., Senior" />
+        </div>
+        <div class="form-group">
+          <label for="salary_range_text">Salary Range (optional)</label>
+          <input id="salary_range_text" name="salary_range_text" placeholder="e.g., $160k–$210k" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="status">Status</label>
+        <select id="status" name="status">
+          <option value="draft" selected>Draft</option>
+          <option value="published">Published</option>
+          <option value="closed">Closed</option>
+        </select>
+        <p class="hint">Only Published jobs will appear on the public application pages (we’ll add those next).</p>
+      </div>
+
+      <div class="form-group">
+        <label for="focus_areas">Key Points / Requirements (for AI generation)</label>
+        <textarea id="focus_areas" name="focus_areas" rows="4" placeholder="Enter a few bullet points or key requirements. The AI will expand these into a comprehensive job description.&#10;&#10;Example:&#10;- 5+ years Python experience&#10;- Experience with AWS and microservices&#10;- Strong communication skills&#10;- Startup experience preferred"></textarea>
+        <p class="hint">Add bullet points or notes here. Click "Generate JD with AI" to create a full job description.</p>
+      </div>
+
+      <div class="form-group">
+        <label for="description_raw">Job Description</label>
+        <div style="display:flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="generateJD()" id="gen-jd-btn">Generate JD with AI</button>
+          <span id="gen-jd-status" style="color: var(--text-muted); font-size: 0.85rem;"></span>
+        </div>
+        <textarea id="description_raw" name="description_raw" rows="12" placeholder="Generated or manually written job description will appear here..."></textarea>
+        <p class="hint">The AI will generate an extensive job description based on your key points above. You can edit it after generation.</p>
+      </div>
+
+      <div class="form-group">
+        <label for="description_html">Job Description (rendered)</label>
+        <textarea id="description_html" name="description_html" placeholder="Optional HTML/Markdown version..."></textarea>
+      </div>
+
+      <div style="display:flex; gap: 0.75rem; justify-content: flex-end;">
+        {% if company %}
+          <a class="btn btn-secondary" href="{{ url_for('companies.view_company', company_id=company.id) }}">Cancel</a>
+        {% else %}
+          <a class="btn btn-secondary" href="{{ url_for('jobs.jobs') }}">Cancel</a>
+        {% endif %}
+        <button class="btn btn-secondary" type="button" onclick="publishJob()">Publish</button>
+        <button class="btn btn-primary" type="submit">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function publishJob() {
+  if (!confirm('Are you sure you want to publish this job? It will be visible on the public application page.')) {
+    return;
+  }
+  
+  // Set status to published and submit form
+  document.getElementById('status').value = 'published';
+  document.querySelector('form').submit();
+}
+
+async function generateJD() {
+  const title = document.getElementById('title').value.trim();
+  if (!title) { alert('Please enter a job title first'); return; }
+
+  const btn = document.getElementById('gen-jd-btn');
+  const status = document.getElementById('gen-jd-status');
+  const dept = document.getElementById('department').value.trim();
+  const loc = document.getElementById('location').value.trim();
+  const emp = document.getElementById('employment_type').value.trim();
+  const sen = document.getElementById('seniority').value.trim();
+  const focusAreas = document.getElementById('focus_areas').value.trim();
+
+  if (!focusAreas) {
+    if (!confirm('No key points provided. Generate a generic JD anyway?')) return;
+  }
+
+  btn.disabled = true;
+  status.textContent = 'Generating comprehensive JD...';
+
+  try {
+    const requestBody = {
+      title,
+      department: dept,
+      location: loc,
+      employment_type: emp,
+      seniority: sen,
+      focus_areas: focusAreas
+    };
+    
+    {% if company %}
+    requestBody.company_id = '{{ company.id }}';
+    {% endif %}
+    
+    const resp = await fetch('/api/jobs/ai-generate-jd', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(requestBody)
+    });
+    const data = await resp.json();
+    if (!resp.ok || data.error) throw new Error(data.error || 'Failed to generate');
+
+    // Use full_description if available, otherwise construct from parts
+    let jdText = data.full_description || '';
+    if (!jdText) {
+      const lines = [];
+      if (data.headline) lines.push(`# ${data.headline}`, '');
+      if (data.summary) lines.push(data.summary, '');
+      if (Array.isArray(data.responsibilities) && data.responsibilities.length) {
+        lines.push('## Responsibilities', '');
+        data.responsibilities.forEach(x => lines.push(`- ${x}`));
+        lines.push('');
+      }
+      if (Array.isArray(data.requirements) && data.requirements.length) {
+        lines.push('## Requirements', '');
+        data.requirements.forEach(x => lines.push(`- ${x}`));
+        lines.push('');
+      }
+      if (Array.isArray(data.nice_to_haves) && data.nice_to_haves.length) {
+        lines.push('## Nice to Have', '');
+        data.nice_to_haves.forEach(x => lines.push(`- ${x}`));
+        lines.push('');
+      }
+      if (Array.isArray(data.benefits) && data.benefits.length) {
+        lines.push('## Benefits', '');
+        data.benefits.forEach(x => lines.push(`- ${x}`));
+        lines.push('');
+      }
+      jdText = lines.join('\n').trim();
+    }
+
+    document.getElementById('description_raw').value = jdText;
+    document.getElementById('description_html').value = jdText; // Also populate HTML field
+    status.textContent = 'Done! Review and edit as needed.';
+  } catch (e) {
+    status.textContent = '';
+    alert('Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  }
+}
+</script>
+{% endblock %}
+

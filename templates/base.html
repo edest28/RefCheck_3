@@ -44,7 +44,7 @@
         .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8125rem; }
         .user-name { font-size: 0.9375rem; color: var(--text-secondary); }
         
-        .main { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
         
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border-radius: 8px; font-family: inherit; font-size: 0.9375rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; border: none; transition: all 0.2s ease; text-decoration: none; }
         .btn:hover { text-decoration: none; transform: translateY(-1px); }
@@ -105,14 +105,15 @@
     {% if current_user.is_authenticated %}
     <header class="header">
         <div class="header-content">
-            <a href="{{ url_for('dashboard') }}" class="logo">
+            <a href="{{ url_for('dashboard.dashboard') }}" class="logo">
                 <div class="logo-icon"></div>
                 RefCheck AI
             </a>
             <nav class="nav">
-                <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">Dashboard</a>
-                <a href="{{ url_for('jobs') }}" class="nav-link {% if request.endpoint in ['jobs', 'new_job', 'create_job_posting', 'job_detail'] %}active{% endif %}">Jobs</a>
-                <a href="{{ url_for('new_candidate') }}" class="nav-link {% if request.endpoint == 'new_candidate' %}active{% endif %}">Add Candidate</a>
+                <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard.dashboard' %}active{% endif %}">Dashboard</a>
+                <a href="{{ url_for('companies.list_companies') }}" class="nav-link {% if 'companies' in request.endpoint %}active{% endif %}">Companies</a>
+                <a href="{{ url_for('jobs.jobs') }}" class="nav-link {% if 'jobs' in request.endpoint %}active{% endif %}">Jobs</a>
+                <a href="{{ url_for('candidates.new_candidate') }}" class="nav-link {% if request.endpoint == 'candidates.new_candidate' %}active{% endif %}">Add Candidate</a>
             </nav>
             <div class="user-menu">
                 <div class="dropdown" id="user-dropdown">
@@ -122,9 +123,9 @@
                         <span>▼</span>
                     </button>
                     <div class="dropdown-menu">
-                        <a href="{{ url_for('settings') }}" class="dropdown-item">Settings</a>
+                        <a href="{{ url_for('settings.settings') }}" class="dropdown-item">Settings</a>
                         <div class="dropdown-divider"></div>
-                        <a href="{{ url_for('logout') }}" class="dropdown-item">Logout</a>
+                        <a href="{{ url_for('auth.logout') }}" class="dropdown-item">Logout</a>
                     </div>
                 </div>
             </div>

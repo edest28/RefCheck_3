@@ -1,0 +1,69 @@
+"""
+Configuration management for RefCheck AI.
+"""
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+class Config:
+    """Base configuration."""
+    SECRET_KEY = os.environ.get('SECRET_KEY', os.urandom(32).hex())
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+    }
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
+    
+    # Global API keys (shared across all users)
+    ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
+    VAPI_API_KEY = os.environ.get('VAPI_API_KEY')
+    VAPI_PHONE_NUMBER_ID = os.environ.get('VAPI_PHONE_NUMBER_ID')
+    TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
+    TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
+    TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER')
+    RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
+    
+    ALLOWED_EXTENSIONS = {'pdf', 'txt', 'doc', 'docx'}
+
+
+class DevelopmentConfig(Config):
+    """Development configuration."""
+    DEBUG = True
+    # Use absolute path for database to avoid working directory issues
+    _db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'instance', 'refcheck.db')
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        'DATABASE_URL',
+        f'sqlite:///{_db_path}'
+    )
+
+
+class ProductionConfig(Config):
+    """Production configuration."""
+    DEBUG = False
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///instance/refcheck.db')
+    
+    # Handle PostgreSQL URL format from Heroku/Railway
+    @staticmethod
+    def init_app(app):
+        if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
+            app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace(
+                'postgres://', 'postgresql://', 1
+            )
+
+
+class TestingConfig(Config):
+    """Testing configuration."""
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+
+
+# Configuration dictionary
+config = {
+    'development': DevelopmentConfig,
+    'production': ProductionConfig,
+    'testing': TestingConfig,
+    'default': DevelopmentConfig
+}
