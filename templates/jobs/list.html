@@ -2,7 +2,8 @@
 {% block title %}Jobs - RefCheck AI{% endblock %}
 
 {% block content %}
-<div class="page-header" style="display:flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem;">
+<div class="page-header"
+  style="display:flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem;">
   <div>
     <h1 style="font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 0.25rem;">Jobs</h1>
     <p style="color: var(--text-secondary);">Create job postings, collect applications, and screen applicants.</p>
@@ -10,54 +11,79 @@
   <a class="btn btn-primary" href="{{ url_for('jobs.new_job_legacy') }}">New Job</a>
 </div>
 
-<div class="card">
-  <div class="card-header">
-    <span>Your job postings</span>
-    <span style="font-weight: 400; color: var(--text-muted); font-size: 0.85rem;">{{ postings|length }} total</span>
+<div class="card" style="border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+  <div
+    style="display: grid; grid-template-columns: 2fr 1fr 1fr 140px; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-light); background: var(--bg-secondary); color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+    <div>Job</div>
+    <div>Status</div>
+    <div>Applicants</div>
+    <div>Actions</div>
   </div>
-  <div class="card-body">
-    {% if postings|length == 0 %}
-      <p style="color: var(--text-muted);">No job postings yet. Create your first one.</p>
+
+  <div class="list-body">
+    {% if jobs|length == 0 %}
+    <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+      <p>No job postings yet.</p>
       <div class="mt-2">
-        <a class="btn btn-primary" href="{{ url_for('jobs.new_job_legacy') }}">Create a job</a>
+        <a class="btn btn-primary" href="{{ url_for('jobs.new_job_legacy') }}">Create your first job</a>
       </div>
+    </div>
     {% else %}
-      <div style="display:flex; flex-direction: column; gap: 0.75rem;">
-        {% for job in postings %}
-          <a class="card" href="{{ url_for('jobs.view_job', job_id=job.id) }}" style="text-decoration:none;">
-            <div class="card-body" style="padding: 1.25rem 1.5rem; display:flex; justify-content: space-between; align-items: center; gap: 1rem;">
-              <div style="min-width: 0;">
-                <div style="font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                  {{ job.title }}
-                </div>
-                <div style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.125rem;">
-                  {% if job.company %}
-                    <a href="{{ url_for('companies.view_company', company_id=job.company.id) }}" style="color: var(--accent); font-weight: 500;">{{ job.company.name }}</a> •
-                  {% elif job.company_name %}
-                    {{ job.company_name }} •
-                  {% endif %}
-                  {{ job.department or '—' }} • {{ job.location or '—' }} • {{ job.employment_type or '—' }}
-                </div>
-              </div>
-              <div style="display:flex; align-items: center; gap: 0.75rem; flex-shrink: 0;">
-                {% set status = job.status or 'draft' %}
-                <span class="status-badge {{ status }}" style="background: var(--bg-tertiary); color: var(--text-muted);">
-                  {{ status|capitalize }}
-                </span>
-                <span style="color: var(--text-muted); font-size: 0.85rem;">
-                  {% set count = job.applicant_count|default(0) %}
-                  {{ count }} {{ 'applicant' if count == 1 else 'applicants' }}
-                </span>
-                <span style="color: var(--text-muted); font-size: 0.85rem;">
-                  Updated {{ job.updated_at.strftime('%b %d') if job.updated_at else '' }}
-                </span>
-              </div>
-            </div>
-          </a>
-        {% endfor %}
+    {% for job in jobs %}
+    <div class="list-row"
+      style="display: grid; grid-template-columns: 2fr 1fr 1fr 140px; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-light); align-items: center; transition: background 0.1s;">
+      <!-- Job Info -->
+      <div style="display:flex; align-items:center; gap: 1rem;">
+        <div
+          style="width: 40px; height: 40px; background: #eff6ff; color: var(--accent); border-radius: 8px; display:flex; align-items:center; justify-content:center; font-weight: 700; font-size: 1rem;">
+          {{ job.title[0] | upper }}
+        </div>
+        <div>
+          <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary);">{{ job.title }}</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem;">
+            {{ job.location or 'Remote' }} • {{ job.employment_type or 'Full-time' }}
+          </div>
+        </div>
       </div>
+
+      <!-- Status -->
+      <div>
+        {% set status = job.status or 'draft' %}
+        <span class="status-badge {{ status }}"
+          style="font-size: 0.8rem; padding: 2px 10px; border-radius: 99px; background: {{ '#ecfdf5' if status == 'published' else '#f3f4f6' }}; color: {{ '#059669' if status == 'published' else '#6b7280' }}; display:inline-flex; align-items:center; gap: 0.35rem;">
+          <span style="width:6px; height:6px; background:currentColor; border-radius:50%;"></span>
+          {{ status|capitalize }}
+        </span>
+      </div>
+
+      <!-- Applicants (Progress-like) -->
+      <div>
+        {% set count = job.applicant_count|default(0) %}
+        <div style="font-size: 0.9rem; color: var(--text-secondary);">
+          {{ count }} <span style="color: var(--text-muted); font-size:0.8rem;">total</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div>
+        <a href="{{ url_for('jobs.view_job', job_id=job.id) }}" class="btn btn-secondary btn-sm"
+          style="display:inline-flex; align-items:center; gap: 0.25rem;">
+          View Details &rarr;
+        </a>
+      </div>
+    </div>
+    {% endfor %}
     {% endif %}
   </div>
 </div>
-{% endblock %}
 
+<style>
+  .list-row:hover {
+    background: var(--bg-secondary);
+  }
+
+  .list-row:last-child {
+    border-bottom: none;
+  }
+</style>
+{% endblock %}

@@ -1,246 +1,317 @@
 {% extends "base.html" %}
 {% block title %}Edit Job - RefCheck AI{% endblock %}
 
+{% block extra_head %}
+<!-- Quill CSS -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<style>
+  .ql-container {
+    font-family: inherit;
+    font-size: 1rem;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    background: var(--bg-card);
+  }
+
+  .ql-toolbar {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    background: var(--bg-secondary);
+    border-color: var(--border-light);
+  }
+
+  .ql-container.ql-snow {
+    border-color: var(--border-light);
+  }
+
+  .split-layout {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .split-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div style="margin-bottom: 1.5rem;">
-  <a href="{{ url_for('jobs.view_job', job_id=job.id) }}" style="color: var(--text-muted); font-size: 0.9rem;">← Back to Job</a>
-  <h1 style="font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; margin-top: 0.5rem;">Edit Job</h1>
-  <p style="color: var(--text-secondary);">Update job details and description.</p>
+  <a href="{{ url_for('jobs.view_job', job_id=job.id) }}" style="color: var(--text-muted); font-size: 0.9rem;">← Back to
+    Job</a>
+  <div style="display:flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+    <div>
+      <h1 style="font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 0.25rem;">Edit Job</h1>
+      <p style="color: var(--text-secondary); margin:0;" class="status-label">
+        Current Status:
+        {% if job.status == 'published' %}
+        <span style="color: var(--success); font-weight: 500;">Published</span>
+        {% else %}
+        <span style="color: var(--text-muted);">Draft</span>
+        {% endif %}
+      </p>
+    </div>
+    <div style="display:flex; gap: 0.75rem;">
+      <a class="btn btn-secondary" href="{{ url_for('jobs.view_job', job_id=job.id) }}">Cancel</a>
+      <button class="btn btn-primary" onclick="submitForm('{{ job.status }}')">Save Changes</button>
+    </div>
+  </div>
 </div>
 
-<form method="POST" action="{{ url_for('jobs.update_job', job_id=job.id) }}">
-  <div class="card">
-    <div class="card-header">Job details</div>
-    <div class="card-body">
-      {% if job.company %}
-        <div class="form-group">
-          <label>Company</label>
-          <div style="padding: 0.75rem 1rem; background: var(--bg-secondary); border-radius: 8px; color: var(--text-primary);">
-            <strong>{{ job.company.name }}</strong>
-            {% if job.company.website %}
-              <br><small style="color: var(--text-muted);"><a href="{{ job.company.website }}" target="_blank">{{ job.company.website }}</a></small>
+<form method="POST" action="{{ url_for('jobs.update_job', job_id=job.id) }}" id="jobForm">
+  <input type="hidden" name="status" id="status" value="{{ job.status }}">
+  <input type="hidden" name="description_html" id="description_html">
+  <input type="hidden" name="description_raw" id="description_raw">
+
+  <div class="split-layout">
+    <!-- Left Column -->
+    <div style="display:flex; flex-direction: column; gap: 1rem;">
+      <div class="card">
+        <div class="card-header">Details</div>
+        <div class="card-body">
+          {% if job.company %}
+          <div class="form-group">
+            <label>Company</label>
+            <div
+              style="padding: 0.5rem 0.75rem; background: var(--bg-secondary); border-radius: 6px; font-size: 0.9rem;">
+              <strong>{{ job.company.name }}</strong>
+              <br><small><a href="{{ url_for('companies.view_company', company_id=job.company.id) }}"
+                  style="color: var(--text-muted);">View profile</a></small>
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="form-group">
+            <label for="title">Job Title *</label>
+            <input id="title" name="title" placeholder="e.g., Senior Engineer" value="{{ job.title }}" required />
+          </div>
+
+          <div class="form-group">
+            <label for="department">Department</label>
+            <input id="department" name="department" placeholder="e.g., Engineering"
+              value="{{ job.department or '' }}" />
+          </div>
+
+          <div class="form-group">
+            <label for="location">Location</label>
+            <input id="location" name="location" placeholder="e.g., Remote" value="{{ job.location or '' }}" />
+          </div>
+
+          <div class="form-group">
+            <label for="employment_type">Type</label>
+            <select id="employment_type" name="employment_type">
+              <option value="">—</option>
+              <option value="Full-time" {% if job.employment_type=='Full-time' %}selected{% endif %}>Full-time</option>
+              <option value="Part-time" {% if job.employment_type=='Part-time' %}selected{% endif %}>Part-time</option>
+              <option value="Contract" {% if job.employment_type=='Contract' %}selected{% endif %}>Contract</option>
+              <option value="Internship" {% if job.employment_type=='Internship' %}selected{% endif %}>Internship
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="seniority">Seniority</label>
+            <input id="seniority" name="seniority" placeholder="e.g., Senior" value="{{ job.seniority or '' }}" />
+          </div>
+
+          <div class="form-group">
+            <label for="salary_range_text">Salary Range</label>
+            <input id="salary_range_text" name="salary_range_text" placeholder="e.g., $160k–$210k"
+              value="{{ job.salary_range_text or '' }}" />
+          </div>
+
+          <div style="border-top: 1px solid var(--border-light); margin-top: 1rem; padding-top: 1rem;">
+            {% if job.status == 'published' %}
+            <button type="button" class="btn btn-secondary btn-sm" onclick="submitForm('draft')"
+              style="width:100%;">Unpublish (Revert to Draft)</button>
+            {% else %}
+            <button type="button" class="btn btn-secondary btn-sm" onclick="submitForm('published')"
+              style="width:100%;">Publish Now</button>
             {% endif %}
-            <br><small style="color: var(--text-muted);"><a href="{{ url_for('companies.view_company', company_id=job.company.id) }}">View company profile</a></small>
+            <button class="btn btn-danger btn-sm" type="button" onclick="deleteJob('{{ job.id }}')"
+              style="width:100%; margin-top: 0.5rem;">Delete Job</button>
           </div>
         </div>
-      {% endif %}
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="title">Job Title *</label>
-          <input id="title" name="title" placeholder="e.g., Senior Software Engineer" value="{{ job.title }}" required />
-        </div>
-        <div class="form-group">
-          <label for="department">Department</label>
-          <input id="department" name="department" placeholder="e.g., Engineering" value="{{ job.department or '' }}" />
-        </div>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label for="location">Location</label>
-          <input id="location" name="location" placeholder="e.g., San Francisco, CA (Remote OK)" value="{{ job.location or '' }}" />
-        </div>
-        <div class="form-group">
-          <label for="employment_type">Employment Type</label>
-          <select id="employment_type" name="employment_type">
-            <option value="">—</option>
-            <option value="Full-time" {% if job.employment_type == 'Full-time' %}selected{% endif %}>Full-time</option>
-            <option value="Part-time" {% if job.employment_type == 'Part-time' %}selected{% endif %}>Part-time</option>
-            <option value="Contract" {% if job.employment_type == 'Contract' %}selected{% endif %}>Contract</option>
-            <option value="Internship" {% if job.employment_type == 'Internship' %}selected{% endif %}>Internship</option>
-          </select>
+      <div class="card">
+        <div class="card-header">AI Assistance</div>
+        <div class="card-body">
+          <div class="form-group">
+            <label for="focus_areas" style="font-size: 0.85rem;">Key Requirements</label>
+            <textarea id="focus_areas" name="focus_areas" rows="5" style="font-size: 0.9rem;"
+              placeholder="Review requirements..."></textarea>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="generateJD()" id="gen-jd-btn"
+              style="width:100%; margin-top: 0.5rem; justify-content: center;">✨ Regenerate with AI</button>
+            <span id="gen-jd-status"
+              style="display:block; margin-top:0.5rem; color: var(--text-muted); font-size: 0.8rem; text-align: center;"></span>
+          </div>
         </div>
       </div>
+    </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label for="seniority">Seniority</label>
-          <input id="seniority" name="seniority" placeholder="e.g., Senior" value="{{ job.seniority or '' }}" />
-        </div>
-        <div class="form-group">
-          <label for="salary_range_text">Salary Range (optional)</label>
-          <input id="salary_range_text" name="salary_range_text" placeholder="e.g., $160k–$210k" value="{{ job.salary_range_text or '' }}" />
-        </div>
+    <!-- Right Column: Description -->
+    <div class="card" style="min-height: 600px; display:flex; flex-direction:column;">
+      <div class="card-header" style="justify-content: space-between;">
+        <span>Job Description</span>
       </div>
-
-      <div class="form-group">
-        <label for="status">Status</label>
-        <select id="status" name="status">
-          <option value="draft" {% if job.status == 'draft' %}selected{% endif %}>Draft</option>
-          <option value="published" {% if job.status == 'published' %}selected{% endif %}>Published</option>
-          <option value="closed" {% if job.status == 'closed' %}selected{% endif %}>Closed</option>
-        </select>
-        <p class="hint">Only Published jobs will appear on the public application pages.</p>
-      </div>
-
-      <div class="form-group">
-        <label for="focus_areas">Key Points / Requirements (for AI generation)</label>
-        <textarea id="focus_areas" name="focus_areas" rows="4" placeholder="Enter a few bullet points or key requirements. The AI will expand these into a comprehensive job description.&#10;&#10;Example:&#10;- 5+ years Python experience&#10;- Experience with AWS and microservices&#10;- Strong communication skills&#10;- Startup experience preferred"></textarea>
-        <p class="hint">Add bullet points or notes here. Click "Generate JD with AI" to create a full job description.</p>
-      </div>
-
-      <div class="form-group">
-        <label for="description_raw">Job Description</label>
-        <div style="display:flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
-          <button type="button" class="btn btn-secondary btn-sm" onclick="generateJD()" id="gen-jd-btn">Generate JD with AI</button>
-          <span id="gen-jd-status" style="color: var(--text-muted); font-size: 0.85rem;"></span>
-        </div>
-        <textarea id="description_raw" name="description_raw" rows="12" placeholder="Generated or manually written job description will appear here...">{{ job.description_raw or '' }}</textarea>
-        <p class="hint">The AI will generate an extensive job description based on your key points above. You can edit it after generation.</p>
-      </div>
-
-      <div class="form-group">
-        <label for="description_html">Job Description (rendered)</label>
-        <textarea id="description_html" name="description_html" rows="8" placeholder="Optional HTML/Markdown version...">{{ job.description_html or '' }}</textarea>
-      </div>
-
-      <div style="display:flex; gap: 0.75rem; justify-content: flex-end;">
-        <button class="btn btn-danger" type="button" onclick="deleteJob('{{ job.id }}')">Delete</button>
-        <a class="btn btn-secondary" href="{{ url_for('jobs.view_job', job_id=job.id) }}">Cancel</a>
-        <button class="btn btn-secondary" type="button" onclick="publishJob('{{ job.id }}')">Publish</button>
-        <button class="btn btn-primary" type="submit">Save Changes</button>
+      <div class="card-body" style="flex:1; display:flex; flex-direction:column; padding: 0;">
+        <div id="editor" style="flex:1; border:none;"></div>
       </div>
     </div>
   </div>
 </form>
+
+<!-- Hidden div for initial content -->
+<div id="initial-content" style="display:none;">
+  {{ job.description_html | safe if job.description_html else (job.description_raw or '') }}
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script>
-function publishJob(jobId) {
-  if (!confirm('Are you sure you want to publish this job? It will be visible on the public application page.')) {
-    return;
-  }
-  
-  // Submit publish request
-  fetch(`/jobs/${jobId}/publish`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin'
-  })
-  .then(resp => resp.json())
-  .then(data => {
-    if (data.error) {
-      alert('Error: ' + data.error);
-    } else {
-      window.location.href = `/jobs/${jobId}`;
+  var quill = new Quill('#editor', {
+    theme: 'snow',
+    placeholder: 'Write a detailed job description...',
+    modules: {
+      toolbar: [
+        [{ 'header': [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+        ['link', 'clean']
+      ]
     }
-  })
-  .catch(err => {
-    alert('Error: ' + err.message);
   });
-}
 
-async function generateJD() {
-  const title = document.getElementById('title').value.trim();
-  if (!title) { alert('Please enter a job title first'); return; }
-
-  const btn = document.getElementById('gen-jd-btn');
-  const status = document.getElementById('gen-jd-status');
-  const companyName = '{{ job.company.name if job.company else (job.company_name or "") }}';
-  const companyWebsite = '{{ job.company.website if job.company and job.company.website else (job.company_website or "") }}';
-  const dept = document.getElementById('department').value.trim();
-  const loc = document.getElementById('location').value.trim();
-  const emp = document.getElementById('employment_type').value.trim();
-  const sen = document.getElementById('seniority').value.trim();
-  const focusAreas = document.getElementById('focus_areas').value.trim();
-
-  if (!focusAreas) {
-    if (!confirm('No key points provided. Generate a generic JD anyway?')) return;
+  // Load initial content
+  var initialContent = document.getElementById('initial-content').innerHTML;
+  if (initialContent) {
+    // If it looks like HTML, use pasteHTML, else insertText
+    if (initialContent.includes('<')) {
+      quill.clipboard.dangerouslyPasteHTML(initialContent);
+    } else {
+      quill.setText(initialContent);
+    }
   }
 
-  btn.disabled = true;
-  status.textContent = 'Generating comprehensive JD...';
+  function submitForm(statusVal) {
+    document.getElementById('status').value = statusVal;
+    document.getElementById('description_html').value = quill.root.innerHTML;
+    document.getElementById('description_raw').value = quill.getText();
 
-  try {
-    const requestBody = {
-      title,
-      department: dept,
-      location: loc,
-      employment_type: emp,
-      seniority: sen,
-      focus_areas: focusAreas
-    };
-    
-    {% if job.company %}
-    requestBody.company_id = '{{ job.company.id }}';
-    {% else %}
-    requestBody.company_name = companyName;
-    requestBody.company_website = companyWebsite;
-    {% endif %}
-    
-    const resp = await fetch('/api/jobs/ai-generate-jd', {
-      method: 'POST',
+    if (statusVal === 'published' && '{{ job.status }}' !== 'published') {
+      if (!confirm('Publish this job? It will be live immediately.')) return;
+    }
+
+    document.getElementById('jobForm').submit();
+  }
+
+  async function generateJD() {
+    const title = document.getElementById('title').value.trim();
+    if (!title) { alert('Please enter a job title first'); return; }
+
+    const btn = document.getElementById('gen-jd-btn');
+    const status = document.getElementById('gen-jd-status');
+    const focusAreas = document.getElementById('focus_areas').value.trim();
+
+    // Gather other fields
+    const dept = document.getElementById('department').value.trim();
+    const loc = document.getElementById('location').value.trim();
+    const emp = document.getElementById('employment_type').value.trim();
+    const sen = document.getElementById('seniority').value.trim();
+
+    if (!confirm('This will overwrite current description. Continue?')) return;
+
+    btn.disabled = true;
+    status.textContent = 'Generating...';
+
+    try {
+      const requestBody = {
+        title,
+        department: dept,
+        location: loc,
+        employment_type: emp,
+        seniority: sen,
+        focus_areas: focusAreas
+      };
+
+      {% if job.company %}
+      requestBody.company_id = '{{ job.company.id }}';
+      {% else %}
+      requestBody.company_name = '{{ job.company_name or "" }}';
+      requestBody.company_website = '{{ job.company_website or "" }}';
+      {% endif %}
+
+      const resp = await fetch('/api/jobs/ai-generate-jd', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(requestBody)
+      });
+
+      const data = await resp.json();
+      if (!resp.ok || data.error) throw new Error(data.error || 'Failed');
+
+      let content = '';
+
+      if (data.full_description) {
+        content = data.full_description.replace(/\n/g, '<br>');
+      } else {
+        // Fallback
+        if (data.headline) content += `<h1>${data.headline}</h1><p>${data.summary}</p><br>`;
+        // ... simplified fallback similar to new.html
+        if (Array.isArray(data.responsibilities) && data.responsibilities.length) {
+          content += '<h2>Responsibilities</h2><ul>' + data.responsibilities.map(i => `<li>${i}</li>`).join('') + '</ul><br>';
+        }
+        if (Array.isArray(data.requirements) && data.requirements.length) {
+          content += '<h2>Requirements</h2><ul>' + data.requirements.map(i => `<li>${i}</li>`).join('') + '</ul><br>';
+        }
+        if (Array.isArray(data.benefits) && data.benefits.length) {
+          content += '<h2>Benefits</h2><ul>' + data.benefits.map(i => `<li>${i}</li>`).join('') + '</ul><br>';
+        }
+      }
+
+      // Check if content looks like HTML, if not, wrap in p
+      if (!content.includes('<')) {
+        content = content.replace(/\n/g, '<br>');
+      }
+
+      // Markdown-ish header cleanup
+      content = content
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^\- (.*$)/gim, '<li>$1</li>');
+
+      quill.clipboard.dangerouslyPasteHTML(content);
+
+      status.textContent = 'Generated!';
+    } catch (e) {
+      status.textContent = '';
+      alert('Error: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      setTimeout(() => { status.textContent = ''; }, 3000);
+    }
+  }
+
+  function deleteJob(jobId) {
+    if (!confirm('Delete this job? This cannot be undone.')) return;
+    fetch(`/jobs/${jobId}`, {
+      method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify(requestBody)
-    });
-    const data = await resp.json();
-    if (!resp.ok || data.error) throw new Error(data.error || 'Failed to generate');
-
-    // Use full_description if available, otherwise construct from parts
-    let jdText = data.full_description || '';
-    if (!jdText) {
-      const lines = [];
-      if (data.headline) lines.push(`# ${data.headline}`, '');
-      if (data.summary) lines.push(data.summary, '');
-      if (Array.isArray(data.responsibilities) && data.responsibilities.length) {
-        lines.push('## Responsibilities', '');
-        data.responsibilities.forEach(x => lines.push(`- ${x}`));
-        lines.push('');
-      }
-      if (Array.isArray(data.requirements) && data.requirements.length) {
-        lines.push('## Requirements', '');
-        data.requirements.forEach(x => lines.push(`- ${x}`));
-        lines.push('');
-      }
-      if (Array.isArray(data.nice_to_haves) && data.nice_to_haves.length) {
-        lines.push('## Nice to Have', '');
-        data.nice_to_haves.forEach(x => lines.push(`- ${x}`));
-        lines.push('');
-      }
-      if (Array.isArray(data.benefits) && data.benefits.length) {
-        lines.push('## Benefits', '');
-        data.benefits.forEach(x => lines.push(`- ${x}`));
-        lines.push('');
-      }
-      jdText = lines.join('\n').trim();
-    }
-
-    document.getElementById('description_raw').value = jdText;
-    document.getElementById('description_html').value = jdText; // Also populate HTML field
-    status.textContent = 'Done! Review and edit as needed.';
-  } catch (e) {
-    status.textContent = '';
-    alert('Error: ' + e.message);
-  } finally {
-    btn.disabled = false;
-    setTimeout(() => { status.textContent = ''; }, 3000);
+      credentials: 'same-origin'
+    })
+      .then(resp => resp.json())
+      .then(data => {
+        if (data.error) alert('Error: ' + data.error);
+        else window.location.href = '/jobs';
+      })
+      .catch(err => alert('Error: ' + err.message));
   }
-}
-
-function deleteJob(jobId) {
-  if (!confirm('Are you sure you want to delete this job? This action cannot be undone. All applications for this job will also be deleted.')) {
-    return;
-  }
-  
-  fetch(`/jobs/${jobId}`, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin'
-  })
-  .then(resp => resp.json())
-  .then(data => {
-    if (data.error) {
-      alert('Error: ' + data.error);
-    } else {
-      window.location.href = '/jobs';
-    }
-  })
-  .catch(err => {
-    alert('Error: ' + err.message);
-  });
-}
 </script>
 {% endblock %}
