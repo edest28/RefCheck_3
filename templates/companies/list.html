@@ -2,56 +2,100 @@
 {% block title %}Companies - RefCheck AI{% endblock %}
 
 {% block content %}
-<div class="page-header" style="display:flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem;">
-  <div>
-    <h1 style="font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 0.25rem;">Companies</h1>
-    <p style="color: var(--text-secondary);">Manage your company profiles and organize jobs.</p>
-  </div>
-  <a class="btn btn-primary" href="{{ url_for('companies.new_company') }}">New Company</a>
+<div class="page-header"
+    style="display:flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem;">
+    <div>
+        <h1 style="font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 0.25rem;">Companies
+        </h1>
+        <p style="color: var(--text-secondary);">Manage your companies and their associated job postings.</p>
+    </div>
+    <a class="btn btn-primary" href="{{ url_for('companies.new_company') }}">New Company</a>
 </div>
 
-<div class="card">
-  <div class="card-header">
-    <span>Your companies</span>
-    <span style="font-weight: 400; color: var(--text-muted); font-size: 0.85rem;">{{ companies|length }} total</span>
-  </div>
-  <div class="card-body">
-    {% if companies|length == 0 %}
-      <p style="color: var(--text-muted);">No companies yet. Create your first company profile.</p>
-      <div class="mt-2">
-        <a class="btn btn-primary" href="{{ url_for('companies.new_company') }}">Create a company</a>
-      </div>
-    {% else %}
-      <div style="display:flex; flex-direction: column; gap: 0.75rem;">
-        {% for company in companies %}
-          <a class="card" href="{{ url_for('companies.view_company', company_id=company.id) }}" style="text-decoration:none;">
-            <div class="card-body" style="padding: 1.25rem 1.5rem; display:flex; justify-content: space-between; align-items: center; gap: 1rem;">
-              <div style="flex: 1; min-width: 0;">
-                <div style="font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                  {{ company.name }}
-                </div>
-                <div style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.125rem;">
-                  {% if company.website %}
-                    <a href="{{ company.website }}" target="_blank" style="color: var(--text-muted);">{{ company.website }}</a>
-                  {% else %}
-                    No website
-                  {% endif %}
-                </div>
-              </div>
-              <div style="display:flex; align-items: center; gap: 0.75rem; flex-shrink: 0;">
-                <span style="color: var(--text-muted); font-size: 0.85rem;">
-                  {% set count = company.job_count|default(0) %}
-                  {{ count }} {{ 'job' if count == 1 else 'jobs' }}
-                </span>
-                <span style="color: var(--text-muted); font-size: 0.85rem;">
-                  Updated {{ company.updated_at.strftime('%b %d') if company.updated_at else '' }}
-                </span>
-              </div>
+<div class="card" style="border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+    <div
+        style="display: grid; grid-template-columns: 2fr 1fr 1fr 140px; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-light); background: var(--bg-secondary); color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+        <div>Company</div>
+        <div>Website</div>
+        <div>Jobs</div>
+        <div>Actions</div>
+    </div>
+
+    <div class="list-body">
+        {% if companies|length == 0 %}
+        <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+            <p>No companies yet.</p>
+            <div class="mt-2">
+                <a class="btn btn-primary" href="{{ url_for('companies.new_company') }}">Create your first company</a>
             </div>
-          </a>
+        </div>
+        {% else %}
+        {% for company in companies %}
+        <div class="list-row"
+            style="display: grid; grid-template-columns: 2fr 1fr 1fr 140px; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-light); align-items: center; transition: background 0.1s;">
+            <!-- Company Info -->
+            <div style="display:flex; align-items:center; gap: 1rem;">
+                <div
+                    style="width: 40px; height: 40px; background: #eff6ff; color: var(--accent); border-radius: 8px; display:flex; align-items:center; justify-content:center; font-weight: 700; font-size: 1rem;">
+                    {{ company.name[0] | upper }}
+                </div>
+                <div>
+                    <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary);">{{ company.name }}
+                    </div>
+                    {% if company.description %}
+                    <div
+                        style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">
+                        {{ company.description }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Website -->
+            <div>
+                {% if company.website %}
+                <a href="{{ company.website }}" target="_blank" rel="noopener noreferrer"
+                    style="color: var(--accent); font-size: 0.9rem; text-decoration: none; display: flex; align-items: center; gap: 0.25rem;">
+                    {{ company.website.replace('https://', '').replace('http://', '').split('/')[0] }}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                </a>
+                {% else %}
+                <span style="color: var(--text-muted); font-size: 0.9rem;">—</span>
+                {% endif %}
+            </div>
+
+            <!-- Job Count -->
+            <div>
+                <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                    {{ company.job_count }} <span style="color: var(--text-muted); font-size:0.8rem;">openings</span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div>
+                <a href="{{ url_for('companies.view_company', company_id=company.id) }}"
+                    class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap: 0.25rem;">
+                    View Details &rarr;
+                </a>
+            </div>
+        </div>
         {% endfor %}
-      </div>
-    {% endif %}
-  </div>
+        {% endif %}
+    </div>
 </div>
+
+<style>
+    .list-row:hover {
+        background: var(--bg-secondary);
+    }
+
+    .list-row:last-child {
+        border-bottom: none;
+    }
+</style>
 {% endblock %}
