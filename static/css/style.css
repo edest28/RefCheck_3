@@ -1,0 +1,277 @@
+:root {
+    --bg-body: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-secondary: #f9fafb;
+    --bg-tertiary: #f3f4f6;
+
+    --primary: #0f172a;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-bg: #eff6ff;
+
+    --success: #166534;
+    --success-bg: #dcfce7;
+
+    --warning: #854d0e;
+    --warning-bg: #fef9c3;
+
+    --danger: #b91c1c;
+    --danger-bg: #fee2e2;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-body);
+    color: var(--text-primary);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.2s;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+}
+
+.btn-secondary {
+    background: white;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+
+.btn-secondary:hover {
+    border-color: var(--text-muted);
+    color: var(--text-primary);
+}
+
+.card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.card-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Table Container - Card Style */
+.table-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    text-align: left;
+    padding: 1.25rem 1.5rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+    /* Lighter text for headers */
+    background: #ffffff;
+    /* White background for header as per image */
+    border-bottom: 1px solid var(--border-light);
+}
+
+td {
+    padding: 1.25rem 1.5rem;
+    /* More breathing room */
+    border-bottom: 1px solid var(--border-light);
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    vertical-align: middle;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+/* Row Hover - Subtle */
+tbody tr:hover td {
+    background-color: #f8fafc !important;
+}
+
+/* Zebra Striping - Removed to match clean white look, or very subtle */
+tbody tr:nth-child(even) {
+    background-color: transparent;
+    /* Reset to white/transparent as per image */
+}
+
+
+/* Badges & Indicators */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 99px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.status-badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* Status variants - matching the soft look */
+.status-badge.applied,
+.status-badge.intake {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.status-badge.screened {
+    background: #fff7ed;
+    color: #9a3412;
+}
+
+.status-badge.interview {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.status-badge.offer {
+    background: #faf5ff;
+    color: #7e22ce;
+}
+
+.status-badge.hired,
+.status-badge.completed {
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.status-badge.rejected {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.status-badge.draft {
+    background: #f8fafc;
+    color: #94a3b8;
+}
+
+.status-badge.published {
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+/* Candidate Avatar */
+.candidate-name {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: #1e293b;
+}
+
+.candidate-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    /* Soft square */
+    background: #eff6ff;
+    color: #3b82f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+/* Buttons - "View Details" style */
+.btn-secondary {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+.btn-secondary:hover {
+    background: #f1f5f9;
+    color: #334155;
+    border-color: #cbd5e1;
+}
+
+/* Signal Badges */
+.signal-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: #f8fafc;
+    /* Default gray like image */
+    color: #64748b;
+}
+
+/* We can keep color coding but make it subtle */
+.signal-indicator.high {
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.signal-indicator.med {
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.signal-indicator.low {
+    background: #fef2f2;
+    color: #b91c1c;
+}

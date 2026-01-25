@@ -1,208 +1,536 @@
 {% extends "base.html" %}
 {% block title %}{{ job.title }} - Jobs - RefCheck AI{% endblock %}
 
+{% block extra_styles %}
+<style>
+  /* Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.active {
+    display: flex;
+  }
+
+  .modal-content {
+    background: var(--bg-card);
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Table & Dashboard Styles Ported */
+  .table-container {
+    background: var(--bg-primary);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 1.5rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th {
+    text-align: left;
+    padding: 1rem 1.75rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.075em;
+    color: var(--text-muted);
+    background: var(--bg-secondary);
+    border-bottom: 1.5px solid var(--border-light);
+  }
+
+  td {
+    padding: 1.25rem 1.75rem;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 0.9375rem;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr {
+    transition: background 0.15s;
+  }
+
+  tr:hover {
+    background: var(--bg-secondary);
+  }
+
+  .candidate-name {
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    color: var(--text-primary);
+  }
+
+  .candidate-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    text-transform: capitalize;
+  }
+
+  .status-badge.applied {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+  }
+
+  .status-badge.screened {
+    background: var(--accent-bg);
+    color: var(--accent);
+  }
+
+  .status-badge.interview {
+    background: #e0f2fe;
+    color: #0284c7;
+  }
+
+  .status-badge.offer {
+    background: #f3e8ff;
+    color: #9333ea;
+  }
+
+  .status-badge.hired {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+
+  .status-badge.rejected {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .signal-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  .signal-indicator.high {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+
+  .signal-indicator.med {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+
+  .signal-indicator.low {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+
+  .signal-indicator.none {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+  }
+
+  .signal-score {
+    font-weight: 700;
+  }
+
+  .action-btn {
+    padding: 0.625rem 1rem;
+    background: var(--bg-tertiary);
+    border: none;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-family: inherit;
+    transition: all 0.2s;
+    text-decoration: none;
+    letter-spacing: -0.01em;
+    display: inline-block;
+  }
+
+  .action-btn:hover {
+    background: var(--accent-bg);
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div style="margin-bottom: 1.5rem;">
-  <a href="{{ url_for('jobs.jobs') }}" style="color: var(--text-muted); font-size: 0.9rem;">← Back to Jobs</a>
-  <div style="display:flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-top: 0.5rem;">
-    <div style="min-width: 0;">
-      <h1 style="font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 0.25rem;">
-        {{ job.title }}
-      </h1>
-      <div style="color: var(--text-muted); font-size: 0.95rem;">
-        {{ job.department or '—' }} • {{ job.location or '—' }} • {{ job.employment_type or '—' }} • {{ job.seniority or '—' }}
-      </div>
-      <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.35rem;">
-        Status: <strong style="color: var(--text-primary);">{{ (job.status or 'draft')|capitalize }}</strong>
-      </div>
-      {% if job.status == 'published' %}
-      <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-        <span style="color: var(--text-muted); font-size: 0.85rem;">Public URL:</span>
-        <code id="public-url" style="font-size: 0.85rem; background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; font-family: monospace;">{{ request.url_root.rstrip('/') }}/apply/jobs/{{ job.public_id }}</code>
-        <button class="btn btn-secondary btn-sm" onclick="copyPublicUrl()" id="copy-url-btn" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Copy URL</button>
-        <span id="copy-status" style="color: var(--success); font-size: 0.85rem;"></span>
-      </div>
-      {% endif %}
-    </div>
-    <div style="display:flex; gap: 0.75rem; align-items: center; flex-shrink: 0;">
-      <a class="btn btn-secondary" href="{{ url_for('jobs.edit_job', job_id=job.id) }}">Edit Job</a>
-      <button class="btn btn-danger" onclick="deleteJob('{{ job.id }}')">Delete</button>
-      <a class="btn btn-secondary" href="{{ url_for('jobs.new_job_legacy') }}">New Job</a>
-    </div>
-  </div>
-</div>
-
-<div class="grid" style="display:grid; grid-template-columns: 1.2fr 1fr; gap: 1.25rem;">
-  <div class="card">
-    <div class="card-header">
-      <span>Job Description</span>
-      <span style="font-weight: 400; color: var(--text-muted); font-size: 0.85rem;">Last updated {{ job.updated_at.strftime('%b %d') if job.updated_at else '' }}</span>
-    </div>
-    <div class="card-body">
-      {% if job.description_html %}
-        <div style="color: var(--text-secondary); white-space: pre-wrap;">{{ job.description_html }}</div>
-      {% elif job.description_raw %}
-        <div style="color: var(--text-secondary); white-space: pre-wrap;">{{ job.description_raw }}</div>
-      {% else %}
-        <p style="color: var(--text-muted);">No job description yet.</p>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-header">
-      <span>Applicants</span>
-      <span style="font-weight: 400; color: var(--text-muted); font-size: 0.85rem;">{{ applications|length }} total</span>
-    </div>
-    <div class="card-body">
-      <div style="display:flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap;">
-        <button class="btn btn-secondary btn-sm" onclick="screenAll()" id="screen-all-btn">AI screen applied</button>
-        <span id="screen-status" style="color: var(--text-muted); font-size: 0.85rem;"></span>
-      </div>
-      {% if applications|length == 0 %}
-        <p style="color: var(--text-muted);">No applications yet.</p>
-        <p class="hint">Next we’ll add a public job page + application form that feeds this list.</p>
-      {% else %}
-        {% set stages = ['applied','screened','interview','offer','hired','rejected'] %}
-        <div style="display:grid; grid-template-columns: repeat(6, minmax(220px, 1fr)); gap: 0.75rem; overflow-x: auto; padding-bottom: 0.25rem;">
-          {% for s in stages %}
-            <div style="min-width: 220px;">
-              <div style="font-weight: 700; font-size: 0.85rem; letter-spacing: -0.01em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">
-                {{ s }}
-              </div>
-              <div style="display:flex; flex-direction: column; gap: 0.75rem;">
-                {% for a in applications if (a.stage or 'applied') == s %}
-            <div class="card" style="border-color: var(--border-light);">
-              <div class="card-body" style="padding: 1rem 1.25rem;">
-                <div style="display:flex; justify-content: space-between; align-items: center; gap: 1rem;">
-                  <div style="min-width:0;">
-                    <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ a.full_name }}</div>
-                    <div style="color: var(--text-muted); font-size: 0.85rem;">{{ a.email }}{% if a.phone %} • {{ a.phone }}{% endif %}</div>
-                  </div>
-                  <div style="text-align:right; flex-shrink:0;">
-                    <select onchange="moveStage('{{ a.id }}', this.value)" style="padding: 0.35rem 0.5rem; font-size: 0.85rem;">
-                      {% for opt in stages %}
-                        <option value="{{ opt }}" {% if opt == (a.stage or 'applied') %}selected{% endif %}>{{ opt|capitalize }}</option>
-                      {% endfor %}
-                    </select>
-                    {% if (a.stage or 'applied') == 'hired' and a.candidate_id %}
-                      <div style="margin-top: 0.35rem;">
-                        <a class="btn btn-secondary btn-sm" href="{{ url_for('candidates.view_candidate', candidate_id=a.candidate_id) }}" style="width:100%; justify-content:center;">View Candidate</a>
-                      </div>
-                    {% endif %}
-                  </div>
-                </div>
-                {% if a.ai_score is not none %}
-                  <div style="margin-top: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
-                    AI score: <strong>{{ a.ai_score }}</strong>
-                  </div>
-                  {% if a.ai_summary %}
-                    <div style="margin-top: 0.25rem; color: var(--text-muted); font-size: 0.9rem;">
-                      {{ a.ai_summary }}
-                    </div>
-                  {% endif %}
-                {% else %}
-                  <div style="margin-top: 0.75rem;">
-                    <button class="btn btn-secondary btn-sm" onclick="screenOne('{{ a.id }}')" id="screen-btn-{{ a.id }}">AI screen</button>
-                  </div>
-                {% endif %}
-              </div>
-            </div>
-                {% endfor %}
-              </div>
-            </div>
-          {% endfor %}
+<div class="card"
+  style="margin-bottom: 1.5rem; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+  <div class="card-body" style="padding: 1.5rem;">
+    <div style="display:flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+      <div>
+        <div style="display:flex; align-items:center; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <a href="{{ url_for('jobs.jobs') }}"
+            style="color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">&larr; Jobs</a>
+          <span style="color: var(--border); font-size: 0.9rem;">|</span>
+          <span style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 500;">{{ job.department or
+            'General' }}</span>
         </div>
-      {% endif %}
+        <h1
+          style="font-size: 1.85rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 0.75rem 0; color: var(--text-primary);">
+          {{ job.title }}</h1>
+        <div style="display:flex; gap: 1rem; font-size: 0.9rem; color: var(--text-secondary); align-items: center;">
+          <span style="display:flex; align-items:center; gap:0.35rem;">📍 {{ job.location or 'Remote' }}</span>
+          <span style="color: var(--border);">•</span>
+          <span style="display:flex; align-items:center; gap:0.35rem;">💼 {{ job.employment_type or 'Full-time'
+            }}</span>
+          <span style="color: var(--border);">•</span>
+          <span class="status-badge {{ job.status }}"
+            style="font-size: 0.75rem; padding: 2px 8px; border-radius: 6px; background: var(--bg-tertiary); color: var(--text-secondary);">{{
+            (job.status or 'draft')|upper }}</span>
+        </div>
+      </div>
+      <div style="display:flex; gap: 0.75rem;">
+        {% if job.status == 'published' %}
+        <a href="/apply/jobs/{{ job.public_id }}" target="_blank" class="btn btn-secondary" style="font-size: 0.9rem;">
+          View Live Page &nearr;
+        </a>
+        {% endif %}
+        <a href="{{ url_for('jobs.edit_job', job_id=job.id) }}" class="btn btn-secondary"
+          style="font-size: 0.9rem;">Edit Details</a>
+        <button class="btn btn-primary" onclick="screenAll()" id="screen-all-btn" style="font-size: 0.9rem;">
+          ✨ AI Screen All
+        </button>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- Tabs (Job vs Board) - Minimal Implementation -->
+<div style="border-bottom: 1px solid var(--border-light); margin-bottom: 1.5rem; margin-top: 1rem;">
+  <div style="display:flex; gap: 2rem;">
+    <a href="#"
+      style="padding-bottom: 0.75rem; border-bottom: 2px solid var(--primary); color: var(--text-primary); font-weight: 500;">Candidates</a>
+    <a href="{{ url_for('jobs.edit_job', job_id=job.id) }}"
+      style="padding-bottom: 0.75rem; border-bottom: 2px solid transparent; color: var(--text-muted);">Job Details</a>
+  </div>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Candidate</th>
+        <th>Status</th>
+        <th>Applied</th>
+        <th>Signal</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if applications|length == 0 %}
+      <tr>
+        <td colspan="5" style="text-align: center; padding: 4.5rem 2rem;">
+          <div style="font-size: 3.5rem; margin-bottom: 1.25rem; opacity: 0.5;">📭</div>
+          <div style="font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 0.625rem;">No
+            candidates yet</div>
+          <div style="color: var(--text-secondary); font-size: 0.9375rem;">Share the public link to get started.</div>
+        </td>
+      </tr>
+      {% else %}
+      {% for app in applications %}
+      <tr>
+        <!-- Candidate -->
+        <td>
+          <div class="candidate-name">
+            <div class="candidate-avatar">{{ app.full_name[0]|upper }}</div>
+            <div>
+              <div style="font-weight: 600;">{{ app.full_name }}</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">{{ app.location or 'Unknown Location' }}</div>
+            </div>
+          </div>
+        </td>
+
+        <!-- Status -->
+        <td>
+          <span class="status-badge {{ app.stage }}">
+            <span class="status-dot"></span>
+            {{ app.stage|capitalize }}
+          </span>
+        </td>
+
+        <!-- Applied -->
+        <td style="color: var(--text-secondary); font-size: 0.85rem;">
+          {{ app.created_at|truncate(10, True, '') }}
+        </td>
+
+        <!-- Signal / AI Score -->
+        <td>
+          {% if app.ai_score is not none %}
+          {% set score_label = 'high' if app.ai_score >= 75 else 'med' if app.ai_score >= 50 else 'low' %}
+          <span class="signal-indicator {{ score_label }}">
+            <span class="signal-score">{{ app.ai_score }}%</span>
+          </span>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+            {{ app.ai_summary|truncate(30) if app.ai_summary else '' }}
+          </div>
+          {% else %}
+          <span class="signal-indicator none">
+            Not Screened
+          </span>
+          {% endif %}
+        </td>
+
+        <!-- Actions -->
+        <td>
+          <button class="action-btn" onclick="openCandidateModal('{{ app.id }}')">
+            View Details &rarr;
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Quick View Modal -->
+<div class="modal-overlay" id="candidate-modal" onclick="if(event.target === this) closeCandidateModal()">
+  <div class="modal-content">
+    <div
+      style="padding: 1.5rem; border-bottom: 1px solid var(--border-light); display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin:0;" id="modal-name">Candidate Name</h2>
+        <div style="color: var(--text-muted); margin-top: 0.25rem;" id="modal-meta">Details</div>
+      </div>
+      <button onclick="closeCandidateModal()"
+        style="background:none; border:none; font-size: 1.5rem; cursor:pointer;">&times;</button>
+    </div>
+    <div style="padding: 1.5rem; overflow-y: auto; flex:1;">
+      <!-- AI Section -->
+      <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+        <h3 style="font-size: 0.85rem; text-transform:uppercase; color: var(--text-muted); margin-bottom: 0.5rem;">AI
+          Analysis</h3>
+        <div id="modal-ai-score"
+          style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;"></div>
+        <div id="modal-ai-summary" style="color: var(--text-secondary); line-height: 1.5;"></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <div>
+          <h3 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Contact</h3>
+          <p id="modal-email">email@example.com</p>
+          <p id="modal-phone">No phone</p>
+          <p><a href="#" id="modal-linkedin" target="_blank">LinkedIn Profile</a></p>
+        </div>
+        <div>
+          <h3 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Application Data</h3>
+          <p><strong>Salary:</strong> <span id="modal-salary">-</span></p>
+          <p><strong>Availability:</strong> <span id="modal-avail">-</span></p>
+          <p><strong>Auth:</strong> <span id="modal-auth">-</span></p>
+        </div>
+      </div>
+
+      <div style="margin-top: 2rem;">
+        <h3 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Cover Letter</h3>
+        <div id="modal-cover"
+          style="white-space: pre-wrap; color: var(--text-secondary); background: var(--bg-secondary); padding: 1rem; border-radius: 8px;">
+        </div>
+      </div>
+    </div>
+    <div
+      style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-light); background: var(--bg-secondary); border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; display:flex; justify-content:flex-end; gap: 0.75rem;">
+      <button class="btn btn-secondary" onclick="screenOne(currentAppId)">Regenerate AI Screen</button>
+      <button class="btn btn-primary" onclick="closeCandidateModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Embed Applications Data for Modal -->
+<script>
+  window.applications = {{ applications | tojson | safe }};
+</script>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-async function screenOne(appId) {
-  const btn = document.getElementById(`screen-btn-${appId}`);
-  if (btn) btn.disabled = true;
-  try {
-    const resp = await fetch(`/api/jobs/{{ job.id }}/applications/${appId}/ai-screen`, { method: 'POST', credentials: 'same-origin' });
-    const data = await resp.json();
-    if (!resp.ok || data.error) throw new Error(data.error || 'Failed');
-    window.location.reload();
-  } catch (e) {
-    alert('Error: ' + e.message);
-    if (btn) btn.disabled = false;
-  }
-}
+  let currentAppId = null;
 
-async function screenAll() {
-  const btn = document.getElementById('screen-all-btn');
-  const status = document.getElementById('screen-status');
-  btn.disabled = true;
-  status.textContent = 'Screening...';
-  try {
-    const resp = await fetch(`/api/jobs/{{ job.id }}/applications/ai-screen-all`, { method: 'POST', credentials: 'same-origin' });
-    const data = await resp.json();
-    if (!resp.ok || data.error) throw new Error(data.error || 'Failed');
-    status.textContent = 'Done';
-    window.location.reload();
-  } catch (e) {
-    status.textContent = '';
-    alert('Error: ' + e.message);
-    btn.disabled = false;
-  }
-}
+  // Initialize Sortable
+  document.addEventListener('DOMContentLoaded', () => {
+    const columns = document.querySelectorAll('.kanban-body');
+    columns.forEach(col => {
+      new Sortable(col, {
+        group: 'kanban', // set both lists to same group
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        dragClass: 'sortable-drag',
+        onEnd: function (evt) {
+          const itemEl = evt.item;
+          const newStage = evt.to.parentElement.dataset.stage;
+          const oldStage = evt.from.parentElement.dataset.stage;
+          const appId = itemEl.dataset.id;
 
-async function moveStage(appId, stage) {
-  try {
-    const resp = await fetch(`/api/jobs/{{ job.id }}/applications/${appId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify({ stage })
+          if (newStage !== oldStage) {
+            updateStage(appId, newStage, oldStage);
+
+            // Update counts
+            updateCount(evt.to.parentElement, 1);
+            updateCount(evt.from.parentElement, -1);
+          }
+        }
+      });
     });
-    const data = await resp.json();
-    if (!resp.ok || data.error) throw new Error(data.error || 'Failed');
-    // no full reload needed, but keep it simple for v1
-    window.location.reload();
-  } catch (e) {
-    alert('Error: ' + e.message);
-  }
-}
-
-function copyPublicUrl() {
-  const url = document.getElementById('public-url').textContent;
-  navigator.clipboard.writeText(url).then(() => {
-    const status = document.getElementById('copy-status');
-    status.textContent = 'Copied!';
-    setTimeout(() => { status.textContent = ''; }, 2000);
-  }).catch(() => {
-    alert('Failed to copy. Please copy manually: ' + url);
   });
-}
 
-function deleteJob(jobId) {
-  if (!confirm('Are you sure you want to delete this job? This action cannot be undone. All applications for this job will also be deleted.')) {
-    return;
+  function updateCount(colEl, delta) {
+    const countEl = colEl.querySelector('.kanban-count');
+    let val = parseInt(countEl.textContent || '0');
+    countEl.textContent = val + delta;
   }
-  
-  fetch(`/jobs/${jobId}`, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin'
-  })
-  .then(resp => resp.json())
-  .then(data => {
-    if (data.error) {
-      alert('Error: ' + data.error);
-    } else {
-      window.location.href = '/jobs';
+
+  async function updateStage(appId, stage, oldStage) {
+    try {
+      const resp = await fetch(`/api/jobs/{{ job.id }}/applications/${appId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ stage })
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        // Revert UI if failed (simplified: just reload)
+        alert('Failed to update stage');
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Connection error');
     }
-  })
-  .catch(err => {
-    alert('Error: ' + err.message);
-  });
-}
+  }
+
+  // Modal Logic
+  function openCandidateModal(appId) {
+    currentAppId = appId;
+    const app = window.applications.find(a => a.id === appId);
+    if (!app) return;
+
+    document.getElementById('modal-name').textContent = app.full_name;
+    document.getElementById('modal-meta').textContent = `${app.email} • ${app.location || ''}`;
+
+    // AI Section
+    const scoreEl = document.getElementById('modal-ai-score');
+    if (app.ai_score !== null) {
+      scoreEl.textContent = app.ai_score + '% Match';
+      scoreEl.style.color = app.ai_score > 75 ? '#166534' : (app.ai_score > 50 ? '#854d0e' : 'var(--text-primary)');
+      document.getElementById('modal-ai-summary').textContent = app.ai_summary || 'No summary available.';
+    } else {
+      scoreEl.textContent = 'Not Screened';
+      scoreEl.style.color = 'var(--text-muted)';
+      document.getElementById('modal-ai-summary').textContent = 'Click "AI Screen" to analyze this applicant.';
+    }
+
+    // Details
+    document.getElementById('modal-email').textContent = app.email;
+    document.getElementById('modal-phone').textContent = app.phone || 'No phone provided';
+
+    const linkedIn = document.getElementById('modal-linkedin');
+    if (app.linkedin_url) {
+      linkedIn.href = app.linkedin_url;
+      linkedIn.style.display = 'inline-block';
+    } else {
+      linkedIn.style.display = 'none';
+    }
+
+    document.getElementById('modal-salary').textContent = app.salary_expectations_text || '-';
+    document.getElementById('modal-avail').textContent = app.availability_text || '-';
+
+    // Auth
+    let authText = app.work_authorization_status || '-';
+    if (app.requires_sponsorship) authText += ' (Needs Sponsorship)';
+    document.getElementById('modal-auth').textContent = authText;
+
+    document.getElementById('modal-cover').textContent = app.cover_letter_text || 'No cover letter submitted.';
+
+    document.getElementById('candidate-modal').classList.add('active');
+  }
+
+  function closeCandidateModal() {
+    document.getElementById('candidate-modal').classList.remove('active');
+    currentAppId = null;
+  }
+
+
+  // Existing Helper Functions
+  async function screenOne(appId) {
+    if (!appId) return;
+    try {
+      const btn = document.querySelector('button[onclick="screenOne(currentAppId)"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Screening...'; }
+
+      const resp = await fetch(`/api/jobs/{{ job.id }}/applications/${appId}/ai-screen`, { method: 'POST', credentials: 'same-origin' });
+      if (!resp.ok) throw new Error('Failed');
+
+      window.location.reload();
+    } catch (e) {
+      alert('Error: ' + e.message);
+    }
+  }
+
+  async function screenAll() {
+    const btn = document.getElementById('screen-all-btn');
+    btn.disabled = true;
+    btn.textContent = 'Screening...';
+    try {
+      const resp = await fetch(`/api/jobs/{{ job.id }}/applications/ai-screen-all`, { method: 'POST', credentials: 'same-origin' });
+      if (!resp.ok) throw new Error('Failed');
+      window.location.reload();
+    } catch (e) {
+      alert('Error: ' + e.message);
+      btn.disabled = false;
+    }
+  }
 </script>
 {% endblock %}
-

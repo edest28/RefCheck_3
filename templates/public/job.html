@@ -1,173 +1,469 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% if posting %}{{ posting.title }}{% else %}Job{% endif %} - Apply</title>
+  <title>{% if job %}{{ job.title }}{% else %}Job{% endif %} - Apply</title>
+
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --bg-primary: #ffffff;
-      --bg-secondary: #fafbfc;
-      --bg-tertiary: #f4f6f8;
-      --accent: #001aa3;
-      --accent-light: #2546ff;
-      --accent-bg: #eef2ff;
-      --success: #10b981;
-      --success-bg: #ecfdf5;
-      --danger: #ef4444;
-      --danger-bg: #fef2f2;
-      --text-primary: #0f172a;
-      --text-secondary: #64748b;
-      --text-muted: #94a3b8;
-      --border: #e5e9f0;
+      --bg-body: #f8fafc;
+      --bg-card: #ffffff;
+      --primary: #0f172a;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: var(--bg-secondary); color: var(--text-primary); }
-    .container { max-width: 1020px; margin: 0 auto; padding: 2rem 1rem; }
-    .grid { display:grid; grid-template-columns: 1.2fr 1fr; gap: 1.25rem; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-    .card { background: var(--bg-primary); border: 1px solid var(--border); border-radius: 12px; overflow:hidden; }
-    .card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); font-weight: 700; }
-    .card-body { padding: 1.5rem; }
-    .title { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
-    .meta { margin-top: 0.5rem; color: var(--text-muted); }
-    .jd { white-space: pre-wrap; color: var(--text-secondary); }
-    label { display:block; font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.4rem; }
-    input, select, textarea { width: 100%; padding: 0.75rem 0.9rem; border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.95rem; background: var(--bg-primary); }
-    textarea { min-height: 110px; resize: vertical; }
-    .row { display:grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-    @media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
-    .form-group { margin-bottom: 1rem; }
-    .hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem; }
-    .btn { display:inline-flex; align-items:center; justify-content:center; width:100%; padding: 0.85rem 1rem; border-radius: 10px; border: none; background: var(--accent); color: white; font-weight: 700; cursor: pointer; }
-    .btn:hover { background: var(--accent-light); }
-    .alert { padding: 0.875rem 1rem; border-radius: 10px; margin-bottom: 1rem; }
-    .alert-error { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
-    .alert-success { background: var(--success-bg); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-body);
+      color: var(--text-main);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 900px;
+      /* Reading width */
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Hero */
+    .hero {
+      padding: 4rem 0 3rem;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--primary);
+      margin-bottom: 1rem;
+      line-height: 1.1;
+    }
+
+    .hero-meta {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    .badge {
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 0.2rem 0.6rem;
+      border-radius: 99px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    /* Content Layout */
+    .content-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 3rem;
+      padding-bottom: 4rem;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .content-wrapper {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .sticky-sidebar {
+        position: static !important;
+      }
+    }
+
+    /* Job Description Typography */
+    .job-content {
+      font-size: 1.05rem;
+      color: var(--text-main);
+      line-height: 1.7;
+    }
+
+    .job-content h1,
+    .job-content h2,
+    .job-content h3,
+    .job-content h4 {
+      color: var(--primary);
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+    }
+
+    .job-content h1 {
+      font-size: 1.8rem;
+    }
+
+    .job-content h2 {
+      font-size: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+
+    .job-content h3 {
+      font-size: 1.25rem;
+    }
+
+    .job-content ul,
+    .job-content ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+      list-style-type: disc !important;
+    }
+
+    .job-content ol {
+      list-style-type: decimal !important;
+    }
+
+    .job-content li {
+      margin-bottom: 0.5rem;
+      padding-left: 0.25rem;
+    }
+
+    .job-content p {
+      margin-bottom: 1.5rem;
+    }
+
+    .job-content strong {
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .job-content a {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    /* Application Form Card */
+    .app-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+      /* Premium shadow */
+      border: 1px solid var(--border);
+      padding: 1.75rem;
+    }
+
+    .sticky-sidebar {
+      position: sticky;
+      top: 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-bottom: 0.4rem;
+      color: var(--primary);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: all 0.2s;
+      background: #f8fafc;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    /* Resume Dropzone */
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 2rem 1rem;
+      text-align: center;
+      background: #f8fafc;
+      transition: all 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .dropzone:hover,
+    .dropzone.dragover {
+      border-color: var(--accent);
+      background: #eff6ff;
+    }
+
+    .dropzone-icon {
+      font-size: 2rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .dropzone-text {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .dropzone input {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .file-selected {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      padding: 0.75rem;
+      border-radius: 8px;
+      margin-top: 0.75rem;
+      display: none;
+    }
+
+    .btn-apply {
+      width: 100%;
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 1rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-apply:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-apply:active {
+      transform: scale(0.98);
+    }
+
+    .logo-area {
+      margin-bottom: 2rem;
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    .logo-square {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .alert-success {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .alert-error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
   </style>
 </head>
+
 <body>
+
   <div class="container">
     {% if error %}
-      <div class="alert alert-error">{{ error }}</div>
+    <div class="alert alert-error">{{ error }}</div>
     {% endif %}
     {% if success %}
-      <div class="alert alert-success">Thanks for applying! Your application has been received.</div>
+    <div class="alert alert-success">
+      <span style="font-size: 1.5rem; display:block; margin-bottom: 0.5rem;">🎉</span>
+      Application submitted successfully! We'll be in touch soon.
+    </div>
     {% endif %}
 
-    {% if posting %}
-      <div style="margin-bottom: 1.25rem;">
-        <div class="title">{{ posting.title }}</div>
-        <div class="meta">{{ posting.department or '—' }} • {{ posting.location or '—' }} • {{ posting.employment_type or '—' }} • {{ posting.seniority or '—' }}</div>
+    {% if job %}
+    <header class="hero">
+      <div class="logo-area">
+        <!-- Placeholder Logo -->
+        <div class="logo-square"></div>
+        {% if job.company_name %}{{ job.company_name }}{% else %}RefCheck AI{% endif %}
+      </div>
+      <h1>{{ job.title }}</h1>
+      <div class="hero-meta">
+        {% if job.department %}<span class="badge">{{ job.department }}</span>{% endif %}
+        <span>📍 {{ job.location or 'Remote' }}</span>
+        <span>💼 {{ job.employment_type or 'Full-time' }}</span>
+        {% if job.seniority %}<span>LEVEL: {{ job.seniority }}</span>{% endif %}
+      </div>
+    </header>
+
+    <div class="content-wrapper">
+      <!-- Left: Job Description -->
+      <div class="job-content">
+        {% if job.description_html %}
+        {{ job.description_html | safe }}
+        {% elif job.description_raw %}
+        {{ job.description_raw }}
+        {% else %}
+        <p>No description provided.</p>
+        {% endif %}
       </div>
 
-      <div class="grid">
-        <div class="card">
-          <div class="card-header">Job Description</div>
-          <div class="card-body">
-            <div class="jd">
-              {% if posting.description_html %}
-                {{ posting.description_html }}
-              {% elif posting.description_raw %}
-                {{ posting.description_raw }}
-              {% else %}
-                No job description provided.
-              {% endif %}
+      <!-- Right: Application Form -->
+      <div class="sticky-sidebar">
+        <div class="app-card">
+          <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.25rem;">Apply for this role</h2>
+
+          <form method="POST" enctype="multipart/form-data" id="applyForm">
+            <div class="form-group">
+              <label>Upload Resume *</label>
+              <div class="dropzone" id="dropzone">
+                <div class="dropzone-icon">📄</div>
+                <div class="dropzone-text">Click or drag PDF/DOCX here</div>
+                <input type="file" name="resume" id="resume" accept=".pdf,.doc,.docx,.txt" required
+                  onchange="handleFileSelect(this)">
+              </div>
+              <div class="file-selected" id="file-info">
+                <span style="font-size: 1.2rem;">📎</span>
+                <div style="flex:1; overflow:hidden;">
+                  <div
+                    style="font-weight:600; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+                    id="filename"></div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div class="card">
-          <div class="card-header">Apply</div>
-          <div class="card-body">
-            <form method="POST" enctype="multipart/form-data">
-              <div class="row">
-                <div class="form-group">
-                  <label for="full_name">Full Name *</label>
-                  <input id="full_name" name="full_name" required />
-                </div>
-                <div class="form-group">
-                  <label for="email">Email *</label>
-                  <input id="email" name="email" type="email" required />
-                </div>
-              </div>
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input name="full_name" class="form-control" placeholder="Jane Doe" required>
+            </div>
 
-              <div class="row">
-                <div class="form-group">
-                  <label for="phone">Phone</label>
-                  <input id="phone" name="phone" />
-                </div>
-                <div class="form-group">
-                  <label for="location">Location</label>
-                  <input id="location" name="location" placeholder="City, State/Province" />
-                </div>
-              </div>
+            <div class="form-group">
+              <label>Email *</label>
+              <input name="email" type="email" class="form-control" placeholder="jane@example.com" required>
+            </div>
 
-              <div class="row">
-                <div class="form-group">
-                  <label for="linkedin_url">LinkedIn</label>
-                  <input id="linkedin_url" name="linkedin_url" placeholder="https://linkedin.com/in/..." />
-                </div>
-                <div class="form-group">
-                  <label for="portfolio_url">Portfolio</label>
-                  <input id="portfolio_url" name="portfolio_url" placeholder="https://..." />
-                </div>
-              </div>
+            <div class="form-group">
+              <label>LinkedIn URL</label>
+              <input name="linkedin_url" class="form-control" placeholder="linkedin.com/in/jane">
+            </div>
 
-              <div class="row">
-                <div class="form-group">
-                  <label for="salary_expectations_text">Salary expectations</label>
-                  <input id="salary_expectations_text" name="salary_expectations_text" placeholder="e.g., $160k–$200k" />
-                </div>
-                <div class="form-group">
-                  <label for="availability_text">Availability</label>
-                  <input id="availability_text" name="availability_text" placeholder="e.g., 2 weeks" />
-                </div>
-              </div>
+            <div class="form-group">
+              <label>Portfolio / Website</label>
+              <input name="portfolio_url" class="form-control" placeholder="https://...">
+            </div>
 
-              <div class="row">
-                <div class="form-group">
-                  <label for="work_country">Work country</label>
-                  <input id="work_country" name="work_country" placeholder="e.g., United States" />
-                </div>
-                <div class="form-group">
-                  <label for="work_authorization_status">Work authorization</label>
-                  <select id="work_authorization_status" name="work_authorization_status">
-                    <option value="">—</option>
-                    <option value="Citizen">Citizen</option>
-                    <option value="Permanent Resident">Permanent Resident</option>
-                    <option value="Visa Holder">Visa Holder</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              </div>
+            <!-- Hidden/Collapsible Extras could go here, keeping it clean for now -->
 
-              <div class="form-group">
-                <label for="requires_sponsorship">Do you require sponsorship?</label>
-                <select id="requires_sponsorship" name="requires_sponsorship">
-                  <option value="no" selected>No</option>
-                  <option value="yes">Yes</option>
-                </select>
-              </div>
+            <button type="submit" class="btn-apply">Submit Application</button>
 
-              <div class="form-group">
-                <label for="resume">Resume *</label>
-                <input id="resume" name="resume" type="file" accept=".pdf,.doc,.docx,.txt" required />
-                <div class="hint">PDF, DOC, DOCX, or TXT</div>
-              </div>
-
-              <div class="form-group">
-                <label for="cover_letter_text">Cover letter (optional)</label>
-                <textarea id="cover_letter_text" name="cover_letter_text" placeholder="Anything you'd like us to know..."></textarea>
-              </div>
-
-              <button class="btn" type="submit">Submit application</button>
-            </form>
-          </div>
+            <p style="text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem;">
+              By applying, you agree to our privacy policy.
+            </p>
+          </form>
         </div>
       </div>
+    </div>
     {% endif %}
-  </div>
-</body>
-</html>
 
+  </div>
+
+  <script>
+    // Drag & Drop Visuals
+    const dropzone = document.getElementById('dropzone');
+
+    if (dropzone) {
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, preventDefaults, false);
+      });
+
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
+      });
+
+      dropzone.addEventListener('drop', handleDrop, false);
+    }
+
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      const input = document.getElementById('resume');
+      input.files = files;
+      handleFileSelect(input);
+    }
+
+    function handleFileSelect(input) {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        document.getElementById('filename').textContent = file.name;
+        document.getElementById('file-info').style.display = 'flex';
+        document.querySelector('.dropzone-text').textContent = 'Change file';
+      }
+    }
+  </script>
+
+</body>
+
+</html>

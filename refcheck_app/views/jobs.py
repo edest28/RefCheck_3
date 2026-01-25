@@ -296,4 +296,7 @@ def submit_application(public_id):
     return redirect(url_for('jobs.application_submitted'))
 
 
-# Note: application_submitted route can be added if needed
+@bp.route('/apply/success', methods=['GET'])
+def application_submitted():
+    """Application submitted success page."""
+    return render_template('public/success.html')

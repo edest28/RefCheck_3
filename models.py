@@ -351,6 +351,13 @@ class JobApplication(db.Model):
         except Exception:
             return []
 
+    @property
+    def reference_progress(self):
+        if self.candidate:
+            return self.candidate.get_reference_progress()
+        return {'completed': 0, 'total': 0}
+
+
     def to_dict(self):
         return {
             'id': self.id,
