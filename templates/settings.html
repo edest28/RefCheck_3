@@ -3,19 +3,31 @@
 
 {% block extra_styles %}
 <style>
-    .page-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 2rem; }
-    .settings-grid { display: grid; grid-template-columns: 250px 1fr; gap: 2rem; }
+    .page-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 2rem; letter-spacing: -0.02em; }
+    .settings-grid { display: grid; grid-template-columns: 240px 1fr; gap: 2rem; align-items: start; }
     @media (max-width: 768px) { .settings-grid { grid-template-columns: 1fr; } }
-    .settings-nav { display: flex; flex-direction: column; gap: 0.25rem; }
-    .settings-nav-item { padding: 0.75rem 1rem; border-radius: 8px; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.15s; border: none; background: none; text-align: left; width: 100%; }
+    .settings-nav { display: flex; flex-direction: column; gap: 0.125rem; }
+    .settings-nav-item { padding: 0.75rem 1rem; border-radius: 4px; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.15s; border: none; background: none; text-align: left; width: 100%; }
     .settings-nav-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
     .settings-nav-item.active { background: var(--accent-bg); color: var(--accent); }
     .settings-section { display: none; }
     .settings-section.active { display: block; }
-    .section-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
-    .section-description { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .section-title { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; letter-spacing: -0.01em; }
+    .section-description { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5; max-width: 56ch; }
     .save-indicator { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--success); font-size: 0.9rem; margin-left: 1rem; opacity: 0; transition: opacity 0.3s; }
     .save-indicator.visible { opacity: 1; }
+    .settings-content .card { border-radius: 4px; border: 1px solid var(--border); }
+    .settings-content .card-body { padding: 1.5rem 1.75rem; }
+    .settings-content .btn { border-radius: 4px; }
+    .settings-content textarea { border-radius: 4px; border: 1px solid var(--border); }
+    /* Rejection email section */
+    #section-rejection .rejection-toggle-wrap { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 4px; margin-bottom: 1.25rem; }
+    #section-rejection .rejection-toggle-wrap label { display: flex; align-items: center; gap: 0.625rem; cursor: pointer; font-size: 0.9375rem; font-weight: 500; color: var(--text-primary); margin: 0; }
+    #section-rejection .rejection-toggle-wrap input[type="checkbox"] { width: 1.125rem; height: 1.125rem; accent-color: var(--accent); }
+    #section-rejection .template-label { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; display: block; }
+    #section-rejection #rejection_email_template { width: 100%; min-height: 180px; padding: 1rem 1.25rem; font-size: 0.9375rem; line-height: 1.6; font-family: inherit; resize: vertical; }
+    #section-rejection .template-hint { font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.45; }
+    #section-rejection .rejection-actions { display: flex; align-items: center; gap: 0.75rem; margin-top: 1.25rem; flex-wrap: wrap; }
 </style>
 {% endblock %}
 
@@ -25,7 +37,9 @@
 <div class="settings-grid">
     <nav class="settings-nav">
         <button class="settings-nav-item active" onclick="showSection('profile', this)">Profile</button>
+        <button class="settings-nav-item" onclick="showSection('pipeline', this)">Pipeline</button>
         <button class="settings-nav-item" onclick="showSection('sms', this)">SMS Template</button>
+        <button class="settings-nav-item" onclick="showSection('rejection', this)">Rejection Email</button>
         <button class="settings-nav-item" onclick="showSection('security', this)">Security</button>
     </nav>
     
@@ -51,6 +65,19 @@
                 </div>
             </div>
         </section>
+
+        <section id="section-pipeline" class="settings-section">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="section-title">Pipeline (Kanban columns)</h2>
+                    <p class="section-description">Configure stages for job candidates. Edit names, reorder, add or remove columns. Mark columns as &quot;Action-triggering&quot; to auto-create a Candidate Reference page when a candidate is moved into that column.</p>
+                    <div id="pipeline-list" style="display:flex; flex-direction:column; gap: 0.5rem; margin-bottom: 1rem;"></div>
+                    <button type="button" class="btn btn-secondary" onclick="addPipelineColumn()" style="margin-bottom: 1rem;">+ Add column</button>
+                    <button type="button" class="btn btn-primary" onclick="savePipeline()">Save pipeline</button>
+                    <span class="save-indicator" id="pipeline-saved">Saved</span>
+                </div>
+            </div>
+        </section>
         
         <section id="section-sms" class="settings-section">
             <div class="card">
@@ -60,6 +87,30 @@
                     <form onsubmit="saveSMS(event)">
                         <div class="form-group"><label for="sms_template">SMS Message</label><textarea id="sms_template" rows="5"></textarea><p class="hint">Variables: {candidate_first_name}, {candidate_last_name}</p></div>
                         <button type="submit" class="btn btn-primary">Save Template</button><span class="save-indicator" id="sms-saved">Saved</span>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-rejection" class="settings-section">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="section-title">Rejection email</h2>
+                    <p class="section-description">When you reject a candidate from a job, you can optionally send them an email. Enable the option below and draft a template. If the template is empty, a default polite message is used.</p>
+                    <form onsubmit="saveRejection(event)">
+                        <div class="rejection-toggle-wrap">
+                            <label for="send_rejection_email">
+                                <input type="checkbox" id="send_rejection_email" />
+                                <span>Send rejection email when I reject a candidate</span>
+                            </label>
+                        </div>
+                        <label for="rejection_email_template" class="template-label">Email template</label>
+                        <textarea id="rejection_email_template" rows="8" placeholder="Hi {{candidate_name}},&#10;&#10;Thank you for applying to {{job_title}} at {{company_name}}. After careful consideration, we have decided to move forward with other candidates.&#10;&#10;We wish you the best in your job search.&#10;&#10;Best regards"></textarea>
+                        <p class="template-hint">Placeholders: <code style="background: var(--bg-tertiary); padding: 0.125rem 0.375rem; border-radius: 2px; font-size: 0.75rem;">{{candidate_name}}</code>, <code style="background: var(--bg-tertiary); padding: 0.125rem 0.375rem; border-radius: 2px; font-size: 0.75rem;">{{job_title}}</code>, <code style="background: var(--bg-tertiary); padding: 0.125rem 0.375rem; border-radius: 2px; font-size: 0.75rem;">{{company_name}}</code>. Plain text; line breaks are preserved.</p>
+                        <div class="rejection-actions">
+                            <button type="submit" class="btn btn-primary">Save</button>
+                            <span class="save-indicator" id="rejection-saved">Saved</span>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -96,6 +147,8 @@
         document.getElementById('company_name').value = settings.company_name || '';
         document.getElementById('timezone').value = settings.timezone || 'America/New_York';
         document.getElementById('sms_template').value = settings.sms_template || '';
+        document.getElementById('send_rejection_email').checked = settings.send_rejection_email || false;
+        document.getElementById('rejection_email_template').value = settings.rejection_email_template || '';
     }
     
     function showSection(name, btn) {
@@ -118,6 +171,12 @@
         await fetch('/api/settings', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sms_template: document.getElementById('sms_template').value }) });
         showSaved('sms-saved');
     }
+
+    async function saveRejection(e) {
+        e.preventDefault();
+        await fetch('/api/settings', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ send_rejection_email: document.getElementById('send_rejection_email').checked, rejection_email_template: document.getElementById('rejection_email_template').value }) });
+        showSaved('rejection-saved');
+    }
     
     async function changePassword(e) {
         e.preventDefault();
@@ -129,6 +188,84 @@
         e.target.reset();
     }
     
+    let pipelineColumns = [];
+
+    async function loadPipeline() {
+        const response = await fetch('/api/pipeline', { credentials: 'same-origin' });
+        const data = await response.json();
+        pipelineColumns = (data.columns || []).slice();
+        renderPipeline();
+    }
+
+    function renderPipeline() {
+        const container = document.getElementById('pipeline-list');
+        container.innerHTML = pipelineColumns.map((col, idx) => `
+            <div class="pipeline-row" data-id="${col.id || ''}" data-slug="${col.slug || ''}" style="display:flex; align-items:center; gap: 0.75rem; padding: 0.5rem 0.75rem; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-light);">
+                <span class="drag-handle" style="cursor: move; color: var(--text-muted); font-size: 1rem;">⋮⋮</span>
+                <input type="text" class="pipeline-label" value="${(col.label || '').replace(/"/g, '&quot;')}" placeholder="Column name" style="flex:1; max-width: 200px; padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid var(--border); font-size: 0.9rem;" data-idx="${idx}" />
+                <label style="display:flex; align-items:center; gap: 0.35rem; font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap;">
+                    <input type="checkbox" class="pipeline-action" ${col.is_action_triggering ? 'checked' : ''} data-idx="${idx}" /> Action-triggering
+                </label>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="movePipelineColumn(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="Move up">↑</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="movePipelineColumn(${idx}, 1)" ${idx === pipelineColumns.length - 1 ? 'disabled' : ''} title="Move down">↓</button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="removePipelineColumn(${idx})" title="Remove">Remove</button>
+            </div>
+        `).join('');
+    }
+
+    function addPipelineColumn() {
+        pipelineColumns.push({ id: '', slug: 'column_' + Math.random().toString(36).slice(2, 10), label: 'New column', order: pipelineColumns.length, is_action_triggering: false });
+        renderPipeline();
+    }
+
+    function movePipelineColumn(idx, delta) {
+        const newIdx = idx + delta;
+        if (newIdx < 0 || newIdx >= pipelineColumns.length) return;
+        const tmp = pipelineColumns[idx];
+        pipelineColumns[idx] = pipelineColumns[newIdx];
+        pipelineColumns[newIdx] = tmp;
+        pipelineColumns.forEach((c, i) => { c.order = i; });
+        renderPipeline();
+    }
+
+    function removePipelineColumn(idx) {
+        if (!confirm('Remove this column? Candidates in this stage will be moved to the first column.')) return;
+        pipelineColumns.splice(idx, 1);
+        pipelineColumns.forEach((c, i) => { c.order = i; });
+        renderPipeline();
+    }
+
+    async function savePipeline() {
+        const rows = document.querySelectorAll('.pipeline-row');
+        const columns = [];
+        rows.forEach((row, i) => {
+            const id = row.getAttribute('data-id');
+            const slug = row.getAttribute('data-slug');
+            const labelInput = row.querySelector('.pipeline-label');
+            const actionCheck = row.querySelector('.pipeline-action');
+            columns.push({
+                id: id || undefined,
+                slug: slug || ('column_' + Math.random().toString(36).slice(2, 10)),
+                label: (labelInput && labelInput.value.trim()) || 'Column',
+                order: i,
+                is_action_triggering: actionCheck ? actionCheck.checked : false
+            });
+        });
+        const response = await fetch('/api/pipeline', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ columns })
+        });
+        const data = await response.json();
+        if (data.error) { alert(data.error); return; }
+        pipelineColumns = (data.columns || []).slice();
+        renderPipeline();
+        document.getElementById('pipeline-saved').classList.add('visible');
+        setTimeout(() => document.getElementById('pipeline-saved').classList.remove('visible'), 2000);
+    }
+
     loadSettings();
+    loadPipeline();
 </script>
 {% endblock %}

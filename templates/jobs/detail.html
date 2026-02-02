@@ -22,14 +22,115 @@
   }
 
   .modal-content {
-    background: var(--bg-card);
+    background: var(--bg-primary);
     width: 90%;
-    max-width: 800px;
+    max-width: 720px;
     max-height: 90vh;
-    border-radius: 12px;
+    border-radius: 16px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.18);
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+  }
+
+  .candidate-modal-header {
+    padding: 1.5rem 1.75rem;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    background: var(--bg-secondary);
+  }
+  .candidate-modal-header h2 {
+    font-size: 1.375rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--text-primary);
+  }
+  .candidate-modal-meta {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+  .candidate-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+  }
+  .candidate-modal-close:hover { color: var(--text-primary); }
+  .candidate-modal-body {
+    padding: 1.5rem 1.75rem;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .candidate-modal-section {
+    margin-bottom: 1.5rem;
+  }
+  .candidate-modal-section:last-child { margin-bottom: 0; }
+  .candidate-modal-section-title {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 0.625rem;
+  }
+  .candidate-modal-ai-card {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+    padding: 1.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+  }
+  .candidate-modal-score {
+    font-size: 2.25rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.5rem;
+  }
+  .candidate-modal-summary {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+  }
+  .candidate-modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  @media (max-width: 560px) { .candidate-modal-grid { grid-template-columns: 1fr; } }
+  .candidate-modal-detail-item {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.375rem;
+  }
+  .candidate-modal-detail-item strong { color: var(--text-primary); }
+  .candidate-modal-cover {
+    white-space: pre-wrap;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    border: 1px solid var(--border-light);
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .candidate-modal-footer {
+    padding: 1rem 1.75rem;
+    border-top: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex-shrink: 0;
   }
 
   /* Table & Dashboard Styles Ported */
@@ -202,6 +303,124 @@
     color: var(--accent);
     transform: translateY(-1px);
   }
+
+  .tab-link {
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .tab-link.active {
+    border-bottom: 2px solid var(--primary);
+    color: var(--text-primary);
+  }
+
+  #preview-view {
+    display: none;
+    background: #f8fafc;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  #preview-iframe {
+    width: 100%;
+    height: 800px;
+    border: none;
+  }
+
+  /* Kanban Styles */
+  .view-toggle {
+    display: flex;
+    background: var(--bg-secondary);
+    padding: 0.25rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .view-btn {
+    padding: 0.4rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    border: none;
+    background: none;
+  }
+
+  .view-btn.active {
+    background: white;
+    color: var(--text-primary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .kanban-board {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    min-height: 600px;
+  }
+
+  .kanban-col {
+    flex: 0 0 280px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .kanban-header {
+    padding: 0.5rem 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: space-between;
+    text-transform: capitalize;
+  }
+
+  .kanban-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 100px;
+    /* Drop target */
+  }
+
+  .kanban-card {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    cursor: grab;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .kanban-card:hover {
+    border-color: var(--border);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .sortable-ghost {
+    opacity: 0.4;
+    background: #f1f5f9;
+    border: 2px dashed #cbd5e1;
+  }
+
+  .sortable-drag {
+    cursor: grabbing;
+    opacity: 1;
+    background: white;
+    transform: rotate(2deg);
+  }
 </style>
 {% endblock %}
 
@@ -222,9 +441,9 @@
           style="font-size: 1.85rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 0.75rem 0; color: var(--text-primary);">
           {{ job.title }}</h1>
         <div style="display:flex; gap: 1rem; font-size: 0.9rem; color: var(--text-secondary); align-items: center;">
-          <span style="display:flex; align-items:center; gap:0.35rem;">📍 {{ job.location or 'Remote' }}</span>
+          <span style="display:flex; align-items:center; gap:0.35rem;">{{ job.location or 'Remote' }}</span>
           <span style="color: var(--border);">•</span>
-          <span style="display:flex; align-items:center; gap:0.35rem;">💼 {{ job.employment_type or 'Full-time'
+          <span style="display:flex; align-items:center; gap:0.35rem;">{{ job.employment_type or 'Full-time'
             }}</span>
           <span style="color: var(--border);">•</span>
           <span class="status-badge {{ job.status }}"
@@ -241,149 +460,226 @@
         <a href="{{ url_for('jobs.edit_job', job_id=job.id) }}" class="btn btn-secondary"
           style="font-size: 0.9rem;">Edit Details</a>
         <button class="btn btn-primary" onclick="screenAll()" id="screen-all-btn" style="font-size: 0.9rem;">
-          ✨ AI Screen All
+          AI Screen All
         </button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Tabs (Job vs Board) - Minimal Implementation -->
-<div style="border-bottom: 1px solid var(--border-light); margin-bottom: 1.5rem; margin-top: 1rem;">
+<!-- View Tabs -->
+<div
+  style="border-bottom: 1px solid var(--border-light); margin-bottom: 1.5rem; margin-top: 1rem; display:flex; justify-content:space-between; align-items:center;">
   <div style="display:flex; gap: 2rem;">
-    <a href="#"
-      style="padding-bottom: 0.75rem; border-bottom: 2px solid var(--primary); color: var(--text-primary); font-weight: 500;">Candidates</a>
-    <a href="{{ url_for('jobs.edit_job', job_id=job.id) }}"
-      style="padding-bottom: 0.75rem; border-bottom: 2px solid transparent; color: var(--text-muted);">Job Details</a>
+    <div class="tab-link active" onclick="switchTab('candidates')">Candidates</div>
+    <div class="tab-link" onclick="switchTab('preview')">Job Preview</div>
+  </div>
+
+  <div id="view-controls" class="view-toggle">
+    <button class="view-btn active" onclick="switchView('list')" id="btn-list">
+      List
+    </button>
+    <button class="view-btn" onclick="switchView('kanban')" id="btn-kanban">
+      Board
+    </button>
   </div>
 </div>
 
-<div class="table-container">
-  <table>
-    <thead>
-      <tr>
-        <th>Candidate</th>
-        <th>Status</th>
-        <th>Applied</th>
-        <th>Signal</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% if applications|length == 0 %}
-      <tr>
-        <td colspan="5" style="text-align: center; padding: 4.5rem 2rem;">
-          <div style="font-size: 3.5rem; margin-bottom: 1.25rem; opacity: 0.5;">📭</div>
-          <div style="font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 0.625rem;">No
-            candidates yet</div>
-          <div style="color: var(--text-secondary); font-size: 0.9375rem;">Share the public link to get started.</div>
-        </td>
-      </tr>
-      {% else %}
-      {% for app in applications %}
-      <tr>
-        <!-- Candidate -->
-        <td>
-          <div class="candidate-name">
-            <div class="candidate-avatar">{{ app.full_name[0]|upper }}</div>
-            <div>
-              <div style="font-weight: 600;">{{ app.full_name }}</div>
-              <div style="font-size: 0.8rem; color: var(--text-muted);">{{ app.location or 'Unknown Location' }}</div>
+<!-- Candidates View -->
+<div id="candidates-view">
+
+  <!-- List View -->
+  <div id="list-view" class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Candidate</th>
+          <th>Status</th>
+          <th>Applied</th>
+          <th>Signal</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if applications|length == 0 %}
+        <tr>
+          <td colspan="5" style="text-align: center; padding: 4.5rem 2rem;">
+            <div style="font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 0.625rem;">No candidates yet</div>
+            <div style="color: var(--text-secondary); font-size: 0.9375rem;">Share the public link to get started.</div>
+          </td>
+        </tr>
+        {% else %}
+        {% for app in applications %}
+        <tr>
+          <!-- Candidate -->
+          <td>
+            <div class="candidate-name">
+              <div class="candidate-avatar">{{ app.full_name[0]|upper }}</div>
+              <div>
+                <div style="font-weight: 600;">{{ app.full_name }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">{{ app.location or 'Unknown Location' }}</div>
+              </div>
             </div>
+          </td>
+
+          <!-- Status (Dropdown) -->
+          <td>
+            <select id="select-{{ app.id }}" onchange="updateStage('{{ app.id }}', this.value, '{{ app.stage }}')"
+              style="padding: 0.4rem; border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem; background:white; cursor:pointer;">
+              {% for col in pipeline_columns %}
+              <option value="{{ col.slug }}" {% if app.stage == col.slug %}selected{% endif %}>{{ col.label }}</option>
+              {% endfor %}
+              {% if app.stage not in pipeline_slugs %}
+              <option value="{{ app.stage }}" selected>Unknown</option>
+              {% endif %}
+            </select>
+          </td>
+
+          <!-- Applied -->
+          <td style="color: var(--text-secondary); font-size: 0.85rem;">
+            {{ app.created_at|truncate(10, True, '') }}
+          </td>
+
+          <!-- Signal / AI Score -->
+          <td>
+            {% if app.ai_score is not none %}
+            {% set score_label = 'high' if app.ai_score >= 75 else 'med' if app.ai_score >= 50 else 'low' %}
+            <span class="signal-indicator {{ score_label }}">
+              <span class="signal-score">{{ app.ai_score }}%</span>
+            </span>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+              {{ app.ai_summary|truncate(30) if app.ai_summary else '' }}
+            </div>
+            {% else %}
+            <span class="signal-indicator none">
+              Not Screened
+            </span>
+            {% endif %}
+          </td>
+
+          <!-- Actions -->
+          <td>
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <button class="action-btn" onclick="openCandidateModal('{{ app.id }}')">
+                View Details &rarr;
+              </button>
+              {% if app.stage != 'rejected' %}
+              <button type="button" class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="rejectCandidate('{{ app.id }}', event)" title="Reject and optionally send rejection email">Reject</button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Kanban View -->
+  <div id="kanban-view" class="kanban-board" style="display:none;">
+    {% for col in pipeline_columns %}
+    {% set apps = applications_by_stage.get(col.slug, []) %}
+    <div class="kanban-col">
+      <div class="kanban-header">
+        <span>{{ col.label }}</span>
+        <span class="kanban-count"
+          style="background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 99px; font-size: 0.75rem;">{{ apps|length }}</span>
+      </div>
+      <div class="kanban-body" data-stage="{{ col.slug }}">
+        {% for app in apps %}
+        <div class="kanban-card" id="card-{{ app.id }}" data-id="{{ app.id }}"
+          onclick="openCandidateModal('{{ app.id }}')">
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+            <div style="font-weight:600; font-size:0.9rem;">{{ app.full_name }}</div>
+            {% if app.ai_score %}
+            <div style="font-weight:700; font-size:0.8rem; color: {{ '#166534' if app.ai_score > 75 else '#854d0e' }}">
+              {{ app.ai_score }}%</div>
+            {% endif %}
           </div>
-        </td>
-
-        <!-- Status -->
-        <td>
-          <span class="status-badge {{ app.stage }}">
-            <span class="status-dot"></span>
-            {{ app.stage|capitalize }}
-          </span>
-        </td>
-
-        <!-- Applied -->
-        <td style="color: var(--text-secondary); font-size: 0.85rem;">
-          {{ app.created_at|truncate(10, True, '') }}
-        </td>
-
-        <!-- Signal / AI Score -->
-        <td>
-          {% if app.ai_score is not none %}
-          {% set score_label = 'high' if app.ai_score >= 75 else 'med' if app.ai_score >= 50 else 'low' %}
-          <span class="signal-indicator {{ score_label }}">
-            <span class="signal-score">{{ app.ai_score }}%</span>
-          </span>
-          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
-            {{ app.ai_summary|truncate(30) if app.ai_summary else '' }}
+          <div style="font-size:0.8rem; color:var(--text-muted);">{{ app.location or 'Remote' }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+    {% set _unknown_apps = applications_by_stage.get('_unknown') %}
+    {% if _unknown_apps %}
+    <div class="kanban-col">
+      <div class="kanban-header">
+        <span>Unknown</span>
+        <span class="kanban-count"
+          style="background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 99px; font-size: 0.75rem;">{{ _unknown_apps|length }}</span>
+      </div>
+      <div class="kanban-body" data-stage="_unknown">
+        {% for app in _unknown_apps %}
+        <div class="kanban-card" id="card-{{ app.id }}" data-id="{{ app.id }}"
+          onclick="openCandidateModal('{{ app.id }}')">
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+            <div style="font-weight:600; font-size:0.9rem;">{{ app.full_name }}</div>
+            {% if app.ai_score %}
+            <div style="font-weight:700; font-size:0.8rem; color: {{ '#166534' if app.ai_score > 75 else '#854d0e' }}">
+              {{ app.ai_score }}%</div>
+            {% endif %}
           </div>
-          {% else %}
-          <span class="signal-indicator none">
-            Not Screened
-          </span>
-          {% endif %}
-        </td>
+          <div style="font-size:0.8rem; color:var(--text-muted);">{{ app.location or 'Remote' }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
 
-        <!-- Actions -->
-        <td>
-          <button class="action-btn" onclick="openCandidateModal('{{ app.id }}')">
-            View Details &rarr;
-          </button>
-        </td>
-      </tr>
-      {% endfor %}
-      {% endif %}
-    </tbody>
-  </table>
+</div>
+<!-- End Candidates View -->
+
+<!-- Preview View -->
+<div id="preview-view">
+  <iframe id="preview-iframe" src="{{ url_for('jobs.preview_job', job_id=job.id) }}"></iframe>
 </div>
 
 <!-- Quick View Modal -->
 <div class="modal-overlay" id="candidate-modal" onclick="if(event.target === this) closeCandidateModal()">
   <div class="modal-content">
-    <div
-      style="padding: 1.5rem; border-bottom: 1px solid var(--border-light); display:flex; justify-content:space-between; align-items:flex-start;">
+    <div class="candidate-modal-header">
       <div>
-        <h2 style="font-size: 1.5rem; font-weight: 700; margin:0;" id="modal-name">Candidate Name</h2>
-        <div style="color: var(--text-muted); margin-top: 0.25rem;" id="modal-meta">Details</div>
+        <h2 id="modal-name">Candidate Name</h2>
+        <div class="candidate-modal-meta" id="modal-meta">Email • Location</div>
       </div>
-      <button onclick="closeCandidateModal()"
-        style="background:none; border:none; font-size: 1.5rem; cursor:pointer;">&times;</button>
+      <button type="button" class="candidate-modal-close" onclick="closeCandidateModal()" aria-label="Close">&times;</button>
     </div>
-    <div style="padding: 1.5rem; overflow-y: auto; flex:1;">
-      <!-- AI Section -->
-      <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-        <h3 style="font-size: 0.85rem; text-transform:uppercase; color: var(--text-muted); margin-bottom: 0.5rem;">AI
-          Analysis</h3>
-        <div id="modal-ai-score"
-          style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;"></div>
-        <div id="modal-ai-summary" style="color: var(--text-secondary); line-height: 1.5;"></div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-        <div>
-          <h3 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Contact</h3>
-          <p id="modal-email">email@example.com</p>
-          <p id="modal-phone">No phone</p>
-          <p><a href="#" id="modal-linkedin" target="_blank">LinkedIn Profile</a></p>
-        </div>
-        <div>
-          <h3 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Application Data</h3>
-          <p><strong>Salary:</strong> <span id="modal-salary">-</span></p>
-          <p><strong>Availability:</strong> <span id="modal-avail">-</span></p>
-          <p><strong>Auth:</strong> <span id="modal-auth">-</span></p>
+    <div class="candidate-modal-body">
+      <div class="candidate-modal-section">
+        <div class="candidate-modal-section-title">AI Analysis</div>
+        <div class="candidate-modal-ai-card">
+          <div id="modal-ai-score" class="candidate-modal-score"></div>
+          <div id="modal-ai-summary" class="candidate-modal-summary"></div>
         </div>
       </div>
 
-      <div style="margin-top: 2rem;">
-        <h3 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Cover Letter</h3>
-        <div id="modal-cover"
-          style="white-space: pre-wrap; color: var(--text-secondary); background: var(--bg-secondary); padding: 1rem; border-radius: 8px;">
+      <div class="candidate-modal-grid candidate-modal-section">
+        <div>
+          <div class="candidate-modal-section-title">Contact</div>
+          <p id="modal-email" class="candidate-modal-detail-item"></p>
+          <p id="modal-phone" class="candidate-modal-detail-item"></p>
+          <p id="modal-linkedin-wrap" style="margin: 0;"><a href="#" id="modal-linkedin" target="_blank" rel="noopener">LinkedIn profile</a></p>
+        </div>
+        <div>
+          <div class="candidate-modal-section-title">Application</div>
+          <p class="candidate-modal-detail-item"><strong>Salary:</strong> <span id="modal-salary">—</span></p>
+          <p class="candidate-modal-detail-item"><strong>Availability:</strong> <span id="modal-avail">—</span></p>
+          <p class="candidate-modal-detail-item"><strong>Work auth:</strong> <span id="modal-auth">—</span></p>
         </div>
       </div>
+
+      <div class="candidate-modal-section" id="modal-cover-section">
+        <div class="candidate-modal-section-title">Cover Letter</div>
+        <div id="modal-cover" class="candidate-modal-cover"></div>
+      </div>
     </div>
-    <div
-      style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-light); background: var(--bg-secondary); border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; display:flex; justify-content:flex-end; gap: 0.75rem;">
-      <button class="btn btn-secondary" onclick="screenOne(currentAppId)">Regenerate AI Screen</button>
-      <button class="btn btn-primary" onclick="closeCandidateModal()">Close</button>
+    <div class="candidate-modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="screenOne(currentAppId)">Regenerate AI Screen</button>
+      <button type="button" class="btn btn-secondary" id="modal-reject-btn" style="color: var(--danger);" onclick="rejectCandidateFromModal()">Reject candidate</button>
+      <button type="button" class="btn btn-primary" onclick="closeCandidateModal()">Close</button>
     </div>
   </div>
 </div>
@@ -395,12 +691,50 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script>
   let currentAppId = null;
+
+  function switchTab(tabName) {
+    // Update Tab Styles
+    document.querySelectorAll('.tab-link').forEach(el => el.classList.remove('active'));
+    const activeTab = Array.from(document.querySelectorAll('.tab-link'))
+      .find(el => el.textContent.trim().toLowerCase().includes(tabName === 'preview' ? 'preview' : 'candidates'));
+    if (activeTab) activeTab.classList.add('active');
+
+    // Toggle Views
+    if (tabName === 'preview') {
+      document.getElementById('candidates-view').style.display = 'none';
+      document.getElementById('preview-view').style.display = 'block';
+      document.getElementById('view-controls').style.display = 'none'; // Hide toggle
+    } else {
+      document.getElementById('candidates-view').style.display = 'block';
+      document.getElementById('preview-view').style.display = 'none';
+      document.getElementById('view-controls').style.display = 'flex'; // Show toggle
+    }
+  }
+
+  function switchView(viewName) {
+    if (viewName === 'list') {
+      document.getElementById('list-view').style.display = 'block';
+      document.getElementById('kanban-view').style.display = 'none';
+      document.getElementById('btn-list').classList.add('active');
+      document.getElementById('btn-kanban').classList.remove('active');
+    } else {
+      document.getElementById('list-view').style.display = 'none';
+      document.getElementById('kanban-view').style.display = 'flex';
+      document.getElementById('btn-list').classList.remove('active');
+      document.getElementById('btn-kanban').classList.add('active');
+    }
+  }
 
   // Initialize Sortable
   document.addEventListener('DOMContentLoaded', () => {
     const columns = document.querySelectorAll('.kanban-body');
+    if (typeof Sortable === 'undefined') {
+      console.error('SortableJS not loaded');
+      return;
+    }
     columns.forEach(col => {
       new Sortable(col, {
         group: 'kanban', // set both lists to same group
@@ -409,16 +743,25 @@
         dragClass: 'sortable-drag',
         onEnd: function (evt) {
           const itemEl = evt.item;
-          const newStage = evt.to.parentElement.dataset.stage;
-          const oldStage = evt.from.parentElement.dataset.stage;
+          const newStage = evt.to.parentElement.dataset.stage || evt.to.dataset.stage;
+          const oldStage = evt.from.parentElement.dataset.stage || evt.from.dataset.stage;
           const appId = itemEl.dataset.id;
 
-          if (newStage !== oldStage) {
-            updateStage(appId, newStage, oldStage);
+          if (newStage && oldStage && newStage !== oldStage) {
+            // Optimistically update counts
+            updateCount(evt.to.closest('.kanban-col'), 1);
+            updateCount(evt.from.closest('.kanban-col'), -1);
 
-            // Update counts
-            updateCount(evt.to.parentElement, 1);
-            updateCount(evt.from.parentElement, -1);
+            // Sync List Dropdown
+            const dropdown = document.getElementById('select-' + appId);
+            if (dropdown) {
+              dropdown.value = newStage;
+              // Update onchange attribute to reflect new current stage
+              dropdown.setAttribute('onchange', `updateStage('${appId}', this.value, '${newStage}')`);
+            }
+
+            // Call API (updates DB)
+            updateStage(appId, newStage, oldStage, true); // true = skipReload
           }
         }
       });
@@ -426,12 +769,73 @@
   });
 
   function updateCount(colEl, delta) {
+    if (!colEl) return;
     const countEl = colEl.querySelector('.kanban-count');
+    if (!countEl) return;
     let val = parseInt(countEl.textContent || '0');
-    countEl.textContent = val + delta;
+    countEl.textContent = Math.max(0, val + delta);
   }
 
-  async function updateStage(appId, stage, oldStage) {
+  function showToast(message, linkUrl, linkText) {
+    let toast = document.getElementById('job-detail-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'job-detail-toast';
+      toast.style.cssText = 'position:fixed; bottom:1.5rem; right:1.5rem; max-width:380px; padding:1rem 1.25rem; background:var(--bg-primary); border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.15); z-index:9999; font-size:0.9375rem; color:var(--text-primary);';
+      document.body.appendChild(toast);
+    }
+    toast.innerHTML = linkUrl ? (message + ' <a href="' + linkUrl + '" style="font-weight:600; color:var(--accent);">' + (linkText || 'Open') + '</a>') : message;
+    toast.style.display = 'block';
+    toast.style.visibility = 'visible';
+    toast.style.opacity = '1';
+    setTimeout(function() { toast.style.display = 'none'; }, 10000);
+  }
+
+  async function rejectCandidate(appId, event) {
+    if (event) event.stopPropagation();
+    if (!confirm('Reject this candidate? They will be moved to Rejected.' + (window.applications && window.applications.find(a => a.id === appId) ? ' An email may be sent if you have that option enabled in Settings.' : ''))) return;
+    try {
+      const resp = await fetch(`/api/jobs/{{ job.id }}/applications/${appId}/reject`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' });
+      const data = resp.ok ? await resp.json().catch(function() { return {}; }) : null;
+      if (!resp.ok) { alert('Failed to reject'); return; }
+      const app = window.applications && window.applications.find(a => a.id === appId);
+      const oldStage = app ? app.stage : null;
+      if (data.success) {
+        if (app) app.stage = 'rejected';
+        if (data.email_sent) showToast('Candidate rejected. Rejection email sent.', null);
+        else showToast('Candidate rejected.', null);
+        const stage = 'rejected';
+        const card = document.getElementById('card-' + appId);
+        if (card) {
+          const oldColBody = card.closest('.kanban-body');
+          const newColBody = document.querySelector('.kanban-body[data-stage="rejected"]');
+          if (oldColBody && newColBody) {
+            newColBody.appendChild(card);
+            updateCount(oldColBody.closest('.kanban-col'), -1);
+            updateCount(newColBody.closest('.kanban-col'), 1);
+          } else if (!newColBody) {
+            window.location.reload();
+            return;
+          }
+        }
+        const dropdown = document.getElementById('select-' + appId);
+        if (dropdown) {
+          dropdown.value = 'rejected';
+          dropdown.setAttribute('onchange', `updateStage('${appId}', this.value, 'rejected')`);
+        }
+        const listRejectBtn = document.querySelector(`button[onclick="rejectCandidate('${appId}', event)"]`);
+        if (listRejectBtn) listRejectBtn.remove();
+      }
+    } catch (e) { console.error(e); alert('Error rejecting candidate'); }
+  }
+
+  function rejectCandidateFromModal() {
+    if (!currentAppId) return;
+    rejectCandidate(currentAppId, null);
+    closeCandidateModal();
+  }
+
+  async function updateStage(appId, stage, oldStage, skipReload = false) {
     try {
       const resp = await fetch(`/api/jobs/{{ job.id }}/applications/${appId}`, {
         method: 'PATCH',
@@ -439,15 +843,40 @@
         credentials: 'same-origin',
         body: JSON.stringify({ stage })
       });
-      const data = await resp.json();
+
+      const data = resp.ok ? await resp.json().catch(function() { return {}; }) : null;
       if (!resp.ok) {
-        // Revert UI if failed (simplified: just reload)
         alert('Failed to update stage');
         window.location.reload();
+        return;
       }
+
+      if (data && data.candidate_url) {
+        var msg = data.candidate_reference_created ? 'Candidate reference page created. ' : 'View reference page. ';
+        showToast(msg, data.candidate_url, 'Open reference page');
+      }
+
+      if (!skipReload) {
+        const card = document.getElementById('card-' + appId);
+        if (card) {
+          const oldColBody = card.closest('.kanban-body');
+          const newColBody = document.querySelector(`.kanban-body[data-stage="${stage}"]`);
+          if (oldColBody && newColBody) {
+            newColBody.appendChild(card);
+            updateCount(oldColBody.closest('.kanban-col'), -1);
+            updateCount(newColBody.closest('.kanban-col'), 1);
+          }
+        }
+        const dropdown = document.getElementById('select-' + appId);
+        if (dropdown) {
+          dropdown.setAttribute('onchange', `updateStage('${appId}', this.value, '${stage}')`);
+        }
+      }
+
     } catch (e) {
       console.error(e);
       alert('Connection error');
+      window.location.reload();
     }
   }
 
@@ -476,23 +905,30 @@
     document.getElementById('modal-email').textContent = app.email;
     document.getElementById('modal-phone').textContent = app.phone || 'No phone provided';
 
+    const linkedInWrap = document.getElementById('modal-linkedin-wrap');
     const linkedIn = document.getElementById('modal-linkedin');
     if (app.linkedin_url) {
       linkedIn.href = app.linkedin_url;
-      linkedIn.style.display = 'inline-block';
+      linkedInWrap.style.display = 'block';
     } else {
-      linkedIn.style.display = 'none';
+      linkedInWrap.style.display = 'none';
     }
 
-    document.getElementById('modal-salary').textContent = app.salary_expectations_text || '-';
-    document.getElementById('modal-avail').textContent = app.availability_text || '-';
+    document.getElementById('modal-salary').textContent = app.salary_expectations_text || '—';
+    document.getElementById('modal-avail').textContent = app.availability_text || '—';
 
-    // Auth
-    let authText = app.work_authorization_status || '-';
-    if (app.requires_sponsorship) authText += ' (Needs Sponsorship)';
+    let authText = app.work_authorization_status || '—';
+    if (app.requires_sponsorship) authText += ' (Needs sponsorship)';
     document.getElementById('modal-auth').textContent = authText;
 
-    document.getElementById('modal-cover').textContent = app.cover_letter_text || 'No cover letter submitted.';
+    const coverEl = document.getElementById('modal-cover');
+    const coverSection = document.getElementById('modal-cover-section');
+    const coverText = (app.cover_letter_text || '').trim();
+    coverEl.textContent = coverText || 'No cover letter submitted.';
+    coverSection.style.display = coverText ? 'block' : 'none';
+
+    const rejectBtn = document.getElementById('modal-reject-btn');
+    if (rejectBtn) rejectBtn.style.display = app.stage === 'rejected' ? 'none' : 'inline-block';
 
     document.getElementById('candidate-modal').classList.add('active');
   }

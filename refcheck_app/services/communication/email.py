@@ -304,3 +304,53 @@ def send_survey_confirmation_email(reference, candidate, resend_api_key):
 
     except Exception as e:
         return {'success': False, 'error': str(e)}
+
+
+def send_rejection_email(application, job_posting, template, resend_api_key):
+    """Send rejection email to applicant using the user's template.
+    Template may use: {{candidate_name}}, {{job_title}}, {{company_name}}
+    """
+    if not resend_api_key:
+        return {'success': False, 'error': 'Resend API key not configured'}
+    if not application.email:
+        return {'success': False, 'error': 'Applicant email not available'}
+
+    candidate_name = application.full_name or 'Candidate'
+    job_title = job_posting.title or 'the position'
+    company_name = getattr(job_posting, 'company', None) and job_posting.company.name or job_posting.company_name or 'our company'
+
+    body = (template or '').strip()
+    if not body:
+        body = f"Hi {candidate_name},\n\nThank you for your interest in {job_title} at {company_name}. After careful consideration, we have decided to move forward with other candidates for this role.\n\nWe wish you the best in your job search.\n\nBest regards,\nThe Hiring Team"
+    body = body.replace('{{candidate_name}}', candidate_name)
+    body = body.replace('{{job_title}}', job_title)
+    body = body.replace('{{company_name}}', company_name)
+
+    subject = f"Update on your application – {job_title}"
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+        {body.replace(chr(10), '<br>')}
+        <p style="color: #666; font-size: 14px; margin-top: 24px;">This email was sent by RefCheck AI.</p>
+    </div>
+    """
+
+    try:
+        response = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {resend_api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "from": "RefCheck AI <onboarding@resend.dev>",
+                "to": [application.email],
+                "subject": subject,
+                "html": html_content
+            },
+            timeout=30
+        )
+        if response.status_code == 200:
+            return {'success': True, 'message_id': response.json().get('id')}
+        return {'success': False, 'error': response.text}
+    except Exception as e:
+        return {'success': False, 'error': str(e)}

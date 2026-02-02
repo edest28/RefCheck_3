@@ -10,6 +10,7 @@ from refcheck_app.models.reference import (
 )
 from refcheck_app.models.company import Company
 from refcheck_app.models.job_posting import JobPosting, JobApplication
+from refcheck_app.models.pipeline import PipelineColumn
 from refcheck_app.models.audit import AuditLog
 
 __all__ = [
@@ -27,5 +28,6 @@ __all__ = [
     'Company',
     'JobPosting',
     'JobApplication',
+    'PipelineColumn',
     'AuditLog',
 ]

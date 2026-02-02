@@ -8,7 +8,8 @@ from refcheck_app.api import (
     jobs_api,
     applications_api,
     settings_api,
-    search_api
+    search_api,
+    pipeline_api,
 )
 
 __all__ = [
@@ -18,5 +19,6 @@ __all__ = [
     'jobs_api',
     'applications_api',
     'settings_api',
-    'search_api'
+    'search_api',
+    'pipeline_api',
 ]

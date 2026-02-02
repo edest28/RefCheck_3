@@ -22,6 +22,8 @@ class User(UserMixin, db.Model):
     # Settings
     sms_template = db.Column(db.Text)
     timezone = db.Column(db.String(50), default='America/New_York')
+    send_rejection_email = db.Column(db.Boolean, default=False)
+    rejection_email_template = db.Column(db.Text)
 
     # API keys (encrypted in production)
     vapi_api_key = db.Column(db.String(255))

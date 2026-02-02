@@ -140,7 +140,31 @@ def get_candidate(candidate_id):
     if not verify_resource_ownership(candidate):
         return jsonify({'error': 'Access denied'}), 403
 
-    return jsonify(candidate.to_dict(include_jobs=True, include_references=True))
+    data = candidate.to_dict(include_jobs=True, include_references=True)
+    data['signal'] = candidate.get_signal()
+    data['reference_progress'] = candidate.get_reference_progress()
+    return jsonify(data)
+
+
+@bp.route('/<candidate_id>/reference-request-status', methods=['GET'])
+@api_login_required
+def get_reference_request_status(candidate_id):
+    """Get reference request status for the candidate (for detail page)."""
+    candidate = Candidate.query.get_or_404(candidate_id)
+
+    if not verify_resource_ownership(candidate):
+        return jsonify({'error': 'Access denied'}), 403
+
+    result = candidate.get_reference_request_status()
+    # Include latest request timestamps if available
+    requests = list(candidate.reference_requests)
+    if requests:
+        latest = max(requests, key=lambda r: r.created_at)
+        result['request'] = {
+            'email_sent_at': latest.email_sent_at.isoformat() if latest.email_sent_at else None,
+            'completed_at': latest.completed_at.isoformat() if latest.completed_at else None,
+        }
+    return jsonify(result)
 
 
 @bp.route('/<candidate_id>/resume', methods=['GET'])
