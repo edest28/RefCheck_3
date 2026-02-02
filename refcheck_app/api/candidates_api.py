@@ -14,6 +14,21 @@ from werkzeug.utils import secure_filename
 from refcheck_app.utils.constants import ALLOWED_EXTENSIONS
 import json
 
+
+def _minimal_parsed_data(resume_filename):
+    """Build minimal parsed data when AI parsing is unavailable (no API key or error)."""
+    base = resume_filename.rsplit('.', 1)[0] if '.' in resume_filename else resume_filename
+    name = base.replace('_', ' ').replace('-', ' ').strip() or 'Candidate'
+    return {
+        'candidate_name': name,
+        'email': '',
+        'phone': '',
+        'summary': '',
+        'skills': [],
+        'jobs': [],
+    }
+
+
 bp = Blueprint('candidates_api', __name__, url_prefix='/api/candidates')
 
 
@@ -109,20 +124,18 @@ def create_candidate():
         if not resume_text:
             return jsonify({'error': 'Could not extract text from file'}), 400
 
-        if not Config.ANTHROPIC_API_KEY:
-            return jsonify({'error': 'ANTHROPIC_API_KEY is not configured. Please set it in Railway environment variables.'}), 500
-        
-        try:
-            parsed_data = parse_resume_with_claude(resume_text, Config.ANTHROPIC_API_KEY)
-            if not parsed_data:
-                return jsonify({'error': 'Failed to parse resume - no data returned from AI'}), 500
-        except ValueError as e:
-            return jsonify({'error': str(e)}), 500
-        except Exception as e:
-            import traceback
-            print(f"Resume parsing error: {e}")
-            print(traceback.format_exc())
-            return jsonify({'error': f'Failed to parse resume: {str(e)}'}), 500
+        if Config.ANTHROPIC_API_KEY:
+            try:
+                parsed_data = parse_resume_with_claude(resume_text, Config.ANTHROPIC_API_KEY)
+                if not parsed_data:
+                    parsed_data = _minimal_parsed_data(filename)
+            except (ValueError, Exception) as e:
+                import traceback
+                print(f"Resume parsing error: {e}")
+                print(traceback.format_exc())
+                parsed_data = _minimal_parsed_data(filename)
+        else:
+            parsed_data = _minimal_parsed_data(filename)
 
         candidate = create_candidate_from_resume(
             current_user.id,
