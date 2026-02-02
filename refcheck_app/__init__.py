@@ -47,10 +47,17 @@ def create_app(config_name='default'):
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Please log in to access this page.'
     login_manager.login_message_category = 'info'
+    login_manager.session_protection = 'basic'  # Protect against session fixation
     
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(user_id)
+        """Load user from database for Flask-Login."""
+        try:
+            return User.query.get(user_id)
+        except Exception as e:
+            import logging
+            logging.error(f"Error loading user {user_id}: {e}")
+            return None
     
     # Register blueprints
     from refcheck_app.views import auth, dashboard, candidates, jobs, settings, public, companies

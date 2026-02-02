@@ -104,9 +104,11 @@ def login():
             user.last_login_at = datetime.utcnow()
             db.session.commit()
 
-            login_user(user, remember=remember)
             from flask import session
+            login_user(user, remember=remember)
             session.permanent = True
+            # Force session to be saved immediately
+            session.modified = True
             log_audit(user.id, 'user_login')
 
             next_page = request.args.get('next')

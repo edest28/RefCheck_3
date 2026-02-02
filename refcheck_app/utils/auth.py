@@ -66,7 +66,17 @@ def api_login_required(f):
     """Decorator for API endpoints that require authentication."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        # Debug: Check session and user state
+        from flask import session
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Log session info for debugging
+        logger.info(f"API auth check - session keys: {list(session.keys())}, user_id in session: {session.get('_user_id', 'NOT FOUND')}")
+        logger.info(f"current_user: {current_user}, is_authenticated: {current_user.is_authenticated}")
+        
         if not current_user.is_authenticated:
+            logger.warning(f"Unauthenticated API request to {request.path} - session: {dict(session)}")
             return jsonify({'error': 'Authentication required'}), 401
         return f(*args, **kwargs)
     return decorated_function

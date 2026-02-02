@@ -54,9 +54,13 @@ class ProductionConfig(Config):
     @staticmethod
     def init_app(app):
         import os
-        # SESSION_COOKIE_SECURE: Set based on environment (Railway uses HTTPS)
-        # Can be disabled with SESSION_COOKIE_SECURE=false env var if needed for debugging
-        app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'true').lower() == 'true'
+        # SESSION_COOKIE_SECURE: Default to False for Railway compatibility
+        # Railway proxies HTTPS but the app might not detect it correctly
+        # Set SESSION_COOKIE_SECURE=true in env if you're sure HTTPS is working
+        app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
+        
+        # Ensure session cookie path is root so it works for all routes
+        app.config['SESSION_COOKIE_PATH'] = '/'
         
         if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
             app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace(
