@@ -105,6 +105,8 @@ def login():
             db.session.commit()
 
             login_user(user, remember=remember)
+            from flask import session
+            session.permanent = True
             log_audit(user.id, 'user_login')
 
             next_page = request.args.get('next')

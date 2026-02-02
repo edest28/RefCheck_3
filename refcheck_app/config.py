@@ -46,13 +46,18 @@ class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///instance/refcheck.db')
     
     # Session cookie security for production
-    SESSION_COOKIE_SECURE = True  # Only send cookies over HTTPS
     SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to cookies
     SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+    PERMANENT_SESSION_LIFETIME = 86400  # 24 hours in seconds
     
     # Handle PostgreSQL URL format from Heroku/Railway
     @staticmethod
     def init_app(app):
+        import os
+        # SESSION_COOKIE_SECURE: Set based on environment (Railway uses HTTPS)
+        # Can be disabled with SESSION_COOKIE_SECURE=false env var if needed for debugging
+        app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'true').lower() == 'true'
+        
         if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
             app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace(
                 'postgres://', 'postgresql://', 1
