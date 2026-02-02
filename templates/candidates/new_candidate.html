@@ -304,8 +304,11 @@
             const data = await response.json();
             if (data.error) throw new Error(data.error);
 
-            candidateId = data.candidate_id;
-            candidateData = data.candidate;
+            candidateId = data.candidate_id || data.candidate?.id;
+            candidateData = data.candidate || {};
+            // Ensure jobs and references arrays exist
+            if (!candidateData.jobs) candidateData.jobs = [];
+            if (!candidateData.references) candidateData.references = [];
             renderStep2();
             goToStep(2);
         } catch (error) {
@@ -322,7 +325,7 @@
         document.getElementById('candidate-summary').textContent = candidateData.summary || '';
         
         const container = document.getElementById('jobs-list');
-        container.innerHTML = candidateData.jobs.map((job, index) => `
+        container.innerHTML = (candidateData.jobs || []).map((job, index) => `
             <div class="job-card" data-index="${index}">
                 <div class="job-header">
                     <div>
@@ -369,7 +372,7 @@
         `).join('');
 
         // Add event listeners to enable preview button when name is filled
-        candidateData.jobs.forEach((job, index) => {
+        (candidateData.jobs || []).forEach((job, index) => {
             const nameInput = document.getElementById(`ref-name-${index}`);
             nameInput.addEventListener('input', () => {
                 const previewBtn = document.getElementById(`preview-btn-${index}`);
@@ -447,7 +450,7 @@
     
     function renderReferences(jobIndex) {
         const refs = (candidateData.references || []).filter(r => {
-            const jobs = candidateData.jobs;
+            const jobs = candidateData.jobs || [];
             const jobId = jobs[jobIndex]?.id;
             return r.job_id === jobId || (!r.job_id && jobIndex === 0);
         });
@@ -585,7 +588,7 @@
         btn.innerHTML = '<span class="spinner"></span> Generating...';
 
         try {
-            const job = candidateData.jobs[jobIndex];
+            const job = (candidateData.jobs || [])[jobIndex];
             console.log('Job data:', job);
 
             const requestBody = {

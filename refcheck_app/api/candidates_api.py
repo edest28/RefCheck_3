@@ -121,7 +121,11 @@ def create_candidate():
         )
 
         log_audit(current_user.id, 'candidate_created', 'candidate', candidate.id)
-        return jsonify({'success': True, 'candidate': candidate.to_dict()}), 201
+        return jsonify({
+            'success': True,
+            'candidate_id': candidate.id,
+            'candidate': candidate.to_dict(include_jobs=True, include_references=True)
+        }), 201
 
     except Exception as e:
         db.session.rollback()
