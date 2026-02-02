@@ -9,7 +9,16 @@ load_dotenv()
 
 class Config:
     """Base configuration."""
-    SECRET_KEY = os.environ.get('SECRET_KEY', os.urandom(32).hex())
+    # IMPORTANT: SECRET_KEY must be consistent across all workers/instances.
+    # In production, REQUIRE that SECRET_KEY is set in the environment.
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    if not SECRET_KEY:
+        # Fail fast instead of silently generating a random key per worker,
+        # which breaks Flask-Login sessions behind Gunicorn.
+        raise RuntimeError(
+            "SECRET_KEY environment variable is required. "
+            "Set SECRET_KEY in your Railway web service variables."
+        )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
