@@ -10,23 +10,8 @@ def parse_resume_with_claude(resume_text, api_key):
     """Use Claude to extract structured information from a resume."""
 
     if not api_key:
-        # Return mock data for testing without API key
-        return {
-            "candidate_name": "Sample Candidate",
-            "email": "sample@example.com",
-            "phone": "+1 555 123 4567",
-            "summary": "Experienced professional",
-            "skills": ["Python", "JavaScript", "Project Management"],
-            "jobs": [
-                {
-                    "company": "Acme Corp",
-                    "title": "Senior Engineer",
-                    "dates": "2020-2023",
-                    "responsibilities": ["Led development teams", "Managed projects"],
-                    "achievements": ["Increased efficiency by 40%", "Launched 3 products"]
-                }
-            ]
-        }
+        # Don't return mock data - raise an error instead
+        raise ValueError("ANTHROPIC_API_KEY is not configured. Please set it in your environment variables.")
 
     headers = {
         "x-api-key": api_key,

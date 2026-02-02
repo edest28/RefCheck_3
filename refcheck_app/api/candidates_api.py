@@ -109,9 +109,20 @@ def create_candidate():
         if not resume_text:
             return jsonify({'error': 'Could not extract text from file'}), 400
 
-        parsed_data = parse_resume_with_claude(resume_text, Config.ANTHROPIC_API_KEY)
-        if not parsed_data:
-            return jsonify({'error': 'Failed to parse resume'}), 500
+        if not Config.ANTHROPIC_API_KEY:
+            return jsonify({'error': 'ANTHROPIC_API_KEY is not configured. Please set it in Railway environment variables.'}), 500
+        
+        try:
+            parsed_data = parse_resume_with_claude(resume_text, Config.ANTHROPIC_API_KEY)
+            if not parsed_data:
+                return jsonify({'error': 'Failed to parse resume - no data returned from AI'}), 500
+        except ValueError as e:
+            return jsonify({'error': str(e)}), 500
+        except Exception as e:
+            import traceback
+            print(f"Resume parsing error: {e}")
+            print(traceback.format_exc())
+            return jsonify({'error': f'Failed to parse resume: {str(e)}'}), 500
 
         candidate = create_candidate_from_resume(
             current_user.id,
