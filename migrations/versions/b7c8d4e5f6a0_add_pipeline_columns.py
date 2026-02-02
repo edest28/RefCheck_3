@@ -36,7 +36,8 @@ def upgrade():
             sa.Column('slug', sa.String(64), nullable=False, index=True),
             sa.Column('label', sa.String(128), nullable=False),
             sa.Column('order', sa.Integer(), nullable=False, server_default=sa.text('0')),
-            sa.Column('is_action_triggering', sa.Boolean(), nullable=False, server_default=sa.text('0')),
+            # Use a proper boolean default for Postgres instead of 0/1
+            sa.Column('is_action_triggering', sa.Boolean(), nullable=False, server_default=sa.text('false')),
         )
         op.create_index('ix_pipeline_columns_user_id', 'pipeline_columns', ['user_id'], unique=False)
         op.create_unique_constraint('uq_pipeline_columns_user_slug', 'pipeline_columns', ['user_id', 'slug'])
@@ -59,7 +60,8 @@ def upgrade():
                     'slug': slug_val,
                     'label': label,
                     'ord': order_val,
-                    'is_action_triggering': 1 if is_trigger else 0,
+                    # Pass a real boolean so Postgres doesn't see an integer for this column
+                    'is_action_triggering': is_trigger,
                 },
             )
 

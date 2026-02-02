@@ -20,7 +20,8 @@ def upgrade():
     insp = sa.inspect(conn)
     cols = [c['name'] for c in insp.get_columns('users')]
     if 'send_rejection_email' not in cols:
-        op.add_column('users', sa.Column('send_rejection_email', sa.Boolean(), nullable=True, server_default=sa.text('0')))
+        # Use a proper boolean default for Postgres instead of integer 0
+        op.add_column('users', sa.Column('send_rejection_email', sa.Boolean(), nullable=True, server_default=sa.text('false')))
     if 'rejection_email_template' not in cols:
         op.add_column('users', sa.Column('rejection_email_template', sa.Text(), nullable=True))
 
