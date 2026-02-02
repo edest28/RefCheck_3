@@ -67,16 +67,23 @@ def api_login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         # Debug: Check session and user state
-        from flask import session
+        from flask import session, request
         import logging
         logger = logging.getLogger(__name__)
         
+        # Check if cookies are being sent
+        cookies_received = request.cookies.get('session', 'NOT FOUND')
+        
         # Log session info for debugging
-        logger.info(f"API auth check - session keys: {list(session.keys())}, user_id in session: {session.get('_user_id', 'NOT FOUND')}")
-        logger.info(f"current_user: {current_user}, is_authenticated: {current_user.is_authenticated}")
+        logger.info(f"API auth check - Path: {request.path}")
+        logger.info(f"Cookies received: {list(request.cookies.keys())}, session cookie: {cookies_received[:50] if cookies_received != 'NOT FOUND' else 'NOT FOUND'}")
+        logger.info(f"Session keys: {list(session.keys())}, user_id in session: {session.get('_user_id', 'NOT FOUND')}")
+        logger.info(f"current_user: {current_user}, is_authenticated: {current_user.is_authenticated}, user_id: {getattr(current_user, 'id', 'NO ID')}")
         
         if not current_user.is_authenticated:
-            logger.warning(f"Unauthenticated API request to {request.path} - session: {dict(session)}")
+            logger.warning(f"Unauthenticated API request to {request.path}")
+            logger.warning(f"Session dict: {dict(session)}")
+            logger.warning(f"Request headers: {dict(request.headers)}")
             return jsonify({'error': 'Authentication required'}), 401
         return f(*args, **kwargs)
     return decorated_function
