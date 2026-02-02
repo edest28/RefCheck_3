@@ -167,6 +167,12 @@ def get_user_settings():
     return {
         'sms_template': current_user.sms_template,
         'timezone': current_user.timezone,
+        'send_rejection_email': bool(current_user.send_rejection_email),
+        'rejection_email_template': current_user.rejection_email_template or '',
         'has_vapi': bool(current_user.vapi_api_key and current_user.vapi_phone_number_id),
-        'has_twilio': bool(current_user.twilio_account_sid and current_user.twilio_auth_token)
+        'has_twilio': bool(current_user.twilio_account_sid and current_user.twilio_auth_token),
+        'first_name': current_user.first_name,
+        'last_name': current_user.last_name,
+        'email': current_user.email,
+        'company_name': current_user.company_name,
     }

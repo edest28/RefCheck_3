@@ -1,9 +1,9 @@
 """
 Job posting view routes.
 """
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, make_response
 from flask_login import login_required, current_user
-from refcheck_app.models import db, JobPosting, JobApplication, Candidate, Company
+from refcheck_app.models import db, JobPosting, JobApplication, Candidate, Company, PipelineColumn
 from refcheck_app.utils.auth import api_login_required, log_audit
 from refcheck_app.services.ai.jd_generator import generate_job_description_with_claude
 from refcheck_app.services.ai.application_screener import analyze_application_with_claude
@@ -19,13 +19,15 @@ bp = Blueprint('jobs', __name__)
 def jobs():
     """List job postings for the current user."""
     from sqlalchemy import func
-    
-    postings = (
-        JobPosting.query.filter_by(user_id=current_user.id)
-        .order_by(JobPosting.updated_at.desc())
-        .all()
-    )
-    
+
+    company_id = request.args.get('company', '').strip() or None
+    companies = Company.query.filter_by(user_id=current_user.id).order_by(Company.name).all()
+
+    query = JobPosting.query.filter_by(user_id=current_user.id)
+    if company_id:
+        query = query.filter_by(company_id=company_id)
+    postings = query.order_by(JobPosting.updated_at.desc()).all()
+
     # Get applicant counts for each job
     job_ids = [p.id for p in postings]
     applicant_counts = {}
@@ -36,14 +38,19 @@ def jobs():
         ).filter(
             JobApplication.job_posting_id.in_(job_ids)
         ).group_by(JobApplication.job_posting_id).all()
-        
+
         applicant_counts = {str(job_id): count for job_id, count in counts}
-    
+
     # Add applicant count to each posting
     for posting in postings:
         posting.applicant_count = applicant_counts.get(posting.id, 0)
-    
-    return render_template('jobs/list.html', jobs=postings)
+
+    return render_template(
+        'jobs/list.html',
+        jobs=postings,
+        companies=companies,
+        selected_company_id=company_id,
+    )
 
 
 @bp.route('/companies/<company_id>/jobs/new', methods=['GET'])
@@ -133,17 +140,60 @@ def view_job(job_id):
         flash('Access denied', 'error')
         return redirect(url_for('jobs.jobs'))
 
-    # Get applications grouped by stage
+    pipeline_columns = (
+        PipelineColumn.query.filter_by(user_id=current_user.id)
+        .order_by(PipelineColumn.order.asc(), PipelineColumn.slug.asc())
+        .all()
+    )
+    pipeline_slugs = [c.slug for c in pipeline_columns]
+    if not pipeline_slugs:
+        pipeline_columns = []
+        pipeline_slugs = ['applied', 'screened', 'interview', 'offer', 'hired', 'rejected']
+        pipeline_column_dicts = [{'slug': s, 'label': s.capitalize()} for s in pipeline_slugs]
+    else:
+        pipeline_column_dicts = [c.to_dict() for c in pipeline_columns]
+
     applications_by_stage = {}
     all_applications = []
-    for stage in ['applied', 'screened', 'interview', 'offer', 'hired', 'rejected']:
+    for slug in pipeline_slugs:
         stage_apps = [
-            app.to_dict() for app in posting.applications.filter_by(stage=stage).all()
+            app.to_dict() for app in posting.applications.filter_by(stage=slug).all()
         ]
-        applications_by_stage[stage] = stage_apps
+        applications_by_stage[slug] = stage_apps
         all_applications.extend(stage_apps)
+    unknown_slug = '_unknown'
+    unknown_apps = [
+        app.to_dict() for app in posting.applications.filter(
+            ~JobApplication.stage.in_(pipeline_slugs)
+        ).all()
+    ]
+    if unknown_apps:
+        applications_by_stage[unknown_slug] = unknown_apps
+        all_applications.extend(unknown_apps)
 
-    return render_template('jobs/detail.html', job=posting, applications=all_applications, applications_by_stage=applications_by_stage)
+    return render_template(
+        'jobs/detail.html',
+        job=posting,
+        applications=all_applications,
+        applications_by_stage=applications_by_stage,
+        pipeline_columns=pipeline_column_dicts,
+        pipeline_slugs=pipeline_slugs,
+    )
+
+
+@bp.route('/jobs/<job_id>/preview')
+@login_required
+def preview_job(job_id):
+    """Internal preview of the job posting (works for drafts too)."""
+    posting = JobPosting.query.get_or_404(job_id)
+
+    if posting.user_id != current_user.id:
+        flash('Access denied', 'error')
+        return redirect(url_for('jobs.jobs'))
+
+    response = make_response(render_template('public/job.html', job=posting, preview_mode=True))
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    return response
 
 
 @bp.route('/jobs/<job_id>/edit', methods=['GET'])
@@ -159,6 +209,24 @@ def edit_job(job_id):
     return render_template('jobs/edit.html', job=posting)
 
 
+def _validate_job_form(data):
+    """Validate job form data. Returns dict of field -> error message (empty if valid)."""
+    errors = {}
+    title = (data.get('title') or '').strip()
+    if not title:
+        errors['title'] = 'Job title is required.'
+    elif len(title) > 255:
+        errors['title'] = 'Job title must be 255 characters or less.'
+    for field, maxlen in [('department', 100), ('location', 255), ('seniority', 100), ('salary_range_text', 255)]:
+        val = (data.get(field) or '').strip()
+        if val and len(val) > maxlen:
+            errors[field] = f'Must be {maxlen} characters or less.'
+    status = (data.get('status') or 'draft').strip()
+    if status not in ('draft', 'published'):
+        errors['status'] = 'Invalid status.'
+    return errors
+
+
 @bp.route('/jobs/<job_id>/edit', methods=['POST'])
 @login_required
 def update_job(job_id):
@@ -166,12 +234,30 @@ def update_job(job_id):
     posting = JobPosting.query.get_or_404(job_id)
 
     if posting.user_id != current_user.id:
-        return jsonify({'error': 'Access denied'}), 403
+        flash('Access denied', 'error')
+        return redirect(url_for('jobs.jobs'))
 
     data = request.form
+    errors = _validate_job_form(data)
+    if errors:
+        return render_template(
+            'jobs/edit.html',
+            job=posting,
+            errors=errors,
+            form_data={
+                'title': data.get('title', posting.title),
+                'department': data.get('department', posting.department or ''),
+                'location': data.get('location', posting.location or ''),
+                'employment_type': data.get('employment_type', posting.employment_type or ''),
+                'seniority': data.get('seniority', posting.seniority or ''),
+                'salary_range_text': data.get('salary_range_text', posting.salary_range_text or ''),
+                'status': data.get('status', posting.status),
+                'description_html': data.get('description_html', posting.description_html or ''),
+                'description_raw': data.get('description_raw', posting.description_raw or ''),
+            },
+        ), 400
 
     posting.title = (data.get('title') or '').strip()
-    # Update company_name/company_website from company relationship if exists
     if posting.company:
         posting.company_name = posting.company.name
         posting.company_website = posting.company.website
@@ -184,7 +270,6 @@ def update_job(job_id):
     posting.status = (data.get('status') or 'draft').strip()
     posting.salary_range_text = (data.get('salary_range_text') or '').strip() or None
 
-    # Generate public_id if publishing for the first time
     if posting.status == 'published' and not posting.public_id:
         posting.public_id = secrets.token_urlsafe(32)
 

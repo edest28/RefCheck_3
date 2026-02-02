@@ -230,7 +230,7 @@
             </div>
         </div>
         <div class="card" style="margin-top: 1rem;">
-            <div class="card-header">📈 Score Breakdown</div>
+            <div class="card-header">Score Breakdown</div>
             <div class="card-body" style="min-height: 200px;">
                 <canvas id="score-breakdown-chart" height="180"></canvas>
             </div>
@@ -366,7 +366,7 @@ function renderCandidate() {
     // Update archive button
     const archiveBtn = document.getElementById('archive-btn');
     if (candidateData.status === 'archived') {
-        archiveBtn.textContent = '📤 Unarchive';
+        archiveBtn.textContent = 'Unarchive';
         archiveBtn.title = 'Restore this candidate to active';
     } else {
         archiveBtn.textContent = 'Archive';

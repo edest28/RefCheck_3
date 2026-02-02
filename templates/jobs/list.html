@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="page-header"
-  style="display:flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem;">
+  style="display:flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
   <div>
     <h1 style="font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 0.25rem;">Jobs</h1>
     <p style="color: var(--text-secondary);">Create job postings, collect applications, and screen applicants.</p>
@@ -11,39 +11,59 @@
   <a class="btn btn-primary" href="{{ url_for('jobs.new_job_legacy') }}">New Job</a>
 </div>
 
+{% if companies %}
+<div class="jobs-filter" style="margin-bottom: 1.25rem;">
+  <label for="company-filter" style="font-size: 0.8125rem; font-weight: 500; color: var(--text-muted); margin-right: 0.5rem;">Filter by company:</label>
+  <select id="company-filter" onchange="window.location.href = this.value ? '{{ url_for('jobs.jobs') }}?company=' + encodeURIComponent(this.value) : '{{ url_for('jobs.jobs') }}';"
+    style="padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--border); font-size: 0.9rem; background: var(--bg-primary); min-width: 200px;">
+    <option value="">All companies</option>
+    {% for c in companies %}
+    <option value="{{ c.id }}" {% if selected_company_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+    {% endfor %}
+  </select>
+</div>
+{% endif %}
+
 <div class="card" style="border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-  <div
-    style="display: grid; grid-template-columns: 2fr 1fr 1fr 140px; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-light); background: var(--bg-secondary); color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+  <div class="jobs-table-header"
+    style="display: grid; grid-template-columns: 1.5fr 1.2fr 0.9fr 0.9fr 1fr 140px; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-light); background: var(--bg-secondary); color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; gap: 0.5rem;">
     <div>Job</div>
+    <div>Company</div>
     <div>Status</div>
     <div>Applicants</div>
+    <div></div>
     <div>Actions</div>
   </div>
 
   <div class="list-body">
     {% if jobs|length == 0 %}
     <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
-      <p>No job postings yet.</p>
+      <p>No job postings yet{% if selected_company_id %} for this company{% endif %}.</p>
       <div class="mt-2">
         <a class="btn btn-primary" href="{{ url_for('jobs.new_job_legacy') }}">Create your first job</a>
       </div>
     </div>
     {% else %}
     {% for job in jobs %}
-    <div class="list-row"
-      style="display: grid; grid-template-columns: 2fr 1fr 1fr 140px; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-light); align-items: center; transition: background 0.1s;">
+    <div class="list-row jobs-table-row"
+      style="display: grid; grid-template-columns: 1.5fr 1.2fr 0.9fr 0.9fr 1fr 140px; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-light); align-items: center; transition: background 0.1s; gap: 0.5rem;">
       <!-- Job Info -->
       <div style="display:flex; align-items:center; gap: 1rem;">
         <div
-          style="width: 40px; height: 40px; background: #eff6ff; color: var(--accent); border-radius: 8px; display:flex; align-items:center; justify-content:center; font-weight: 700; font-size: 1rem;">
+          style="width: 40px; height: 40px; background: var(--bg-tertiary); color: var(--accent); border-radius: 8px; display:flex; align-items:center; justify-content:center; font-weight: 700; font-size: 1rem; flex-shrink: 0;">
           {{ job.title[0] | upper }}
         </div>
-        <div>
+        <div style="min-width: 0;">
           <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary);">{{ job.title }}</div>
           <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem;">
             {{ job.location or 'Remote' }} • {{ job.employment_type or 'Full-time' }}
           </div>
         </div>
+      </div>
+
+      <!-- Company -->
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">
+        {% if job.company %}{{ job.company.name }}{% elif job.company_name %}{{ job.company_name }}{% else %}—{% endif %}
       </div>
 
       <!-- Status -->
@@ -56,13 +76,15 @@
         </span>
       </div>
 
-      <!-- Applicants (Progress-like) -->
+      <!-- Applicants -->
       <div>
         {% set count = job.applicant_count|default(0) %}
         <div style="font-size: 0.9rem; color: var(--text-secondary);">
           {{ count }} <span style="color: var(--text-muted); font-size:0.8rem;">total</span>
         </div>
       </div>
+
+      <div></div>
 
       <!-- Actions -->
       <div>
@@ -78,12 +100,9 @@
 </div>
 
 <style>
-  .list-row:hover {
-    background: var(--bg-secondary);
-  }
-
-  .list-row:last-child {
-    border-bottom: none;
-  }
+  .jobs-table-header { align-items: center; }
+  .list-row:hover { background: var(--bg-secondary); }
+  .list-row:last-child { border-bottom: none; }
+  .card { overflow-x: auto; }
 </style>
 {% endblock %}

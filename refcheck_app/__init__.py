@@ -17,9 +17,11 @@ def create_app(config_name='default'):
     # Get database URL from environment
     database_url = os.environ.get('DATABASE_URL')
     
-    # Set template folder to project root templates directory
-    template_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'templates')
-    app = Flask(__name__, template_folder=template_folder)
+    # Set template and static folders to project root (same level as refcheck_app/)
+    root = os.path.dirname(os.path.dirname(__file__))
+    template_folder = os.path.join(root, 'templates')
+    static_folder = os.path.join(root, 'static')
+    app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
     
     # Load configuration
     app.config.from_object(config[config_name])
@@ -52,7 +54,7 @@ def create_app(config_name='default'):
     
     # Register blueprints
     from refcheck_app.views import auth, dashboard, candidates, jobs, settings, public, companies
-    from refcheck_app.api import candidates_api, references_api, calls_api, jobs_api, applications_api, settings_api, search_api
+    from refcheck_app.api import candidates_api, references_api, calls_api, jobs_api, applications_api, settings_api, search_api, pipeline_api
     
     app.register_blueprint(auth.bp)
     app.register_blueprint(dashboard.bp)
@@ -69,6 +71,7 @@ def create_app(config_name='default'):
     app.register_blueprint(applications_api.bp)
     app.register_blueprint(settings_api.bp)
     app.register_blueprint(search_api.bp)
+    app.register_blueprint(pipeline_api.bp)
     
     # Register error handlers
     from flask import render_template

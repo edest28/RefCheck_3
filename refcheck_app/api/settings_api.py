@@ -25,6 +25,10 @@ def update_settings():
 
     if 'sms_template' in data:
         current_user.sms_template = (data.get('sms_template') or '').strip() or None
+    if 'send_rejection_email' in data:
+        current_user.send_rejection_email = bool(data.get('send_rejection_email'))
+    if 'rejection_email_template' in data:
+        current_user.rejection_email_template = (data.get('rejection_email_template') or '').strip() or None
     if 'timezone' in data:
         current_user.timezone = (data.get('timezone') or '').strip() or 'America/New_York'
     if 'company_name' in data:

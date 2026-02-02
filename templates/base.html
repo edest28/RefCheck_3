@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}RefCheck AI{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/hubot-sans@5.0.0/400.css" crossorigin="anonymous">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         :root {
@@ -75,32 +76,19 @@
         }
 
         .logo {
+            font-family: 'Hubot Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 1.125rem;
-            font-weight: 600;
+            font-weight: 400;
             letter-spacing: -0.02em;
             color: var(--text-primary);
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 0.625rem;
             text-decoration: none;
         }
 
         .logo:hover {
             text-decoration: none;
             color: var(--text-primary);
-        }
-
-        .logo-icon {
-            width: 28px;
-            height: 28px;
-            background: var(--accent);
-            border-radius: 7px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.875rem;
-            font-weight: 600;
         }
 
         .nav {
@@ -451,9 +439,7 @@
     {% if current_user.is_authenticated %}
     <header class="header">
         <div class="header-content">
-            <a href="{{ url_for('dashboard.dashboard') }}" class="logo">
-                <div class="logo-icon"></div>RefCheck AI
-            </a>
+            <a href="{{ url_for('dashboard.dashboard') }}" class="logo">RefCheck AI</a>
             <nav class="nav"><a href="{{ url_for('dashboard.dashboard') }}"
                     class="nav-link {% if request.endpoint == 'dashboard.dashboard' %}active{% endif %}">Dashboard</a><a
                     href="{{ url_for('companies.list_companies') }}"
