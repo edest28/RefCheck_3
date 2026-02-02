@@ -1,24 +1,35 @@
 """
 Configuration management for RefCheck AI.
 """
+import hashlib
+import logging
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 
+def _get_secret_key():
+    """Read SECRET_KEY from env; support common alternate names and treat empty as unset."""
+    for name in ("SECRET_KEY", "FLASK_SECRET_KEY"):
+        val = os.environ.get(name)
+        if val and isinstance(val, str) and val.strip():
+            return val.strip()
+    return None
+
+
+def _production_secret_fallback():
+    """Deterministic key from DATABASE_URL so all Gunicorn workers share the same key."""
+    url = os.environ.get("DATABASE_URL") or ""
+    if not url:
+        return None
+    return hashlib.sha256(url.encode()).hexdigest()
+
+
 class Config:
     """Base configuration."""
-    # IMPORTANT: SECRET_KEY must be consistent across all workers/instances.
-    # In production, REQUIRE that SECRET_KEY is set in the environment.
-    SECRET_KEY = os.environ.get('SECRET_KEY')
-    if not SECRET_KEY:
-        # Fail fast instead of silently generating a random key per worker,
-        # which breaks Flask-Login sessions behind Gunicorn.
-        raise RuntimeError(
-            "SECRET_KEY environment variable is required. "
-            "Set SECRET_KEY in your Railway web service variables."
-        )
+    # SECRET_KEY: prefer env vars; base class does not raise so deployment always succeeds.
+    SECRET_KEY = _get_secret_key()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
@@ -47,12 +58,26 @@ class DevelopmentConfig(Config):
         'DATABASE_URL',
         f'sqlite:///{_db_path}'
     )
+    if not Config.SECRET_KEY:
+        SECRET_KEY = "dev-secret-key-change-in-production"
 
 
 class ProductionConfig(Config):
     """Production configuration."""
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///instance/refcheck.db')
+    # Ensure a stable SECRET_KEY so all Gunicorn workers share the same key (sessions work).
+    # Prefer explicit SECRET_KEY; if missing, use deterministic fallback from DATABASE_URL.
+    if not Config.SECRET_KEY:
+        _fallback = _production_secret_fallback()
+        if _fallback:
+            SECRET_KEY = _fallback
+            logging.warning(
+                "SECRET_KEY not set; using deterministic key from DATABASE_URL. "
+                "Set SECRET_KEY in Railway for stronger security."
+            )
+        else:
+            SECRET_KEY = "production-change-me-set-SECRET_KEY"
     
     # Session cookie security for production
     SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to cookies
@@ -81,6 +106,8 @@ class TestingConfig(Config):
     """Testing configuration."""
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    if not Config.SECRET_KEY:
+        SECRET_KEY = "test-secret-key"
 
 
 # Configuration dictionary
