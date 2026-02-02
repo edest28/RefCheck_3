@@ -300,7 +300,7 @@
             formData.append('sms_template', smsTemplate);
             if (candidateName) formData.append('candidate_name', candidateName);
 
-            const response = await fetch('/api/candidates', { method: 'POST', body: formData });
+            const response = await fetch('/api/candidates', { method: 'POST', body: formData, credentials: 'same-origin' });
             const data = await response.json();
             if (data.error) throw new Error(data.error);
 

@@ -388,7 +388,7 @@ function showTab(tabName) {
 
 async function loadCandidate() {
     try {
-        const response = await fetch(`/api/candidates/${candidateId}`);
+        const response = await fetch(`/api/candidates/${candidateId}`, { credentials: 'same-origin' });
         candidateData = await response.json();
         if (candidateData.error) { window.location.href = '/'; return; }
         candidateData.references = candidateData.references || [];
@@ -805,13 +805,15 @@ async function saveReference() {
         if (refId) {
             response = await fetch(`/api/candidates/${candidateId}/references/${refId}`, {
                 method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, phone, email, relationship, contact_method: contactMethod, custom_questions: questions })
+                body: JSON.stringify({ name, phone, email, relationship, contact_method: contactMethod, custom_questions: questions }),
+                credentials: 'same-origin'
             });
         } else {
             const jobId = candidateData.jobs && candidateData.jobs[parseInt(jobIndex)] ? candidateData.jobs[parseInt(jobIndex)].id : null;
             response = await fetch(`/api/candidates/${candidateId}/references`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, phone, email, relationship, contact_method: contactMethod, job_id: jobId, custom_questions: questions })
+                body: JSON.stringify({ name, phone, email, relationship, contact_method: contactMethod, job_id: jobId, custom_questions: questions }),
+                credentials: 'same-origin'
             });
         }
         const data = await response.json();
@@ -824,7 +826,7 @@ async function saveReference() {
 async function deleteReference(refId) {
     if (!confirm('Delete this reference?')) return;
     try {
-        const response = await fetch(`/api/candidates/${candidateId}/references/${refId}`, { method: 'DELETE' });
+        const response = await fetch(`/api/candidates/${candidateId}/references/${refId}`, { method: 'DELETE', credentials: 'same-origin' });
         const data = await response.json();
         if (data.error) throw new Error(data.error);
         loadCandidate();
@@ -840,7 +842,8 @@ async function startCall(refId) {
     try {
         const response = await fetch('/api/start-reference-check', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ candidate_id: candidateId, reference_id: refId })
+            body: JSON.stringify({ candidate_id: candidateId, reference_id: refId }),
+            credentials: 'same-origin'
         });
         const data = await response.json();
         if (data.error) throw new Error(data.error);
@@ -858,7 +861,7 @@ function startPolling(refId, checkId) {
     if (pollIntervals[refId]) clearInterval(pollIntervals[refId]);
     pollIntervals[refId] = setInterval(async () => {
         try {
-            const response = await fetch(`/api/check-status/${checkId}`);
+            const response = await fetch(`/api/check-status/${checkId}`, { credentials: 'same-origin' });
             const data = await response.json();
             if (data.status === 'ended' || data.status === 'failed') {
                 clearInterval(pollIntervals[refId]);
@@ -871,7 +874,8 @@ function startPolling(refId, checkId) {
 async function sendSMS(refId) {
     try {
         const response = await fetch(`/api/candidates/${candidateId}/references/${refId}/send-sms`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({})
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}),
+            credentials: 'same-origin'
         });
         const data = await response.json();
         if (data.error) throw new Error(data.error);
@@ -898,7 +902,8 @@ async function confirmSchedule() {
     try {
         await fetch(`/api/candidates/${candidateId}/references/${currentScheduleRef}/schedule`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ scheduled_time: datetime, timezone })
+            body: JSON.stringify({ scheduled_time: datetime, timezone }),
+            credentials: 'same-origin'
         });
         closeScheduleModal();
         loadCandidate();
@@ -942,7 +947,7 @@ async function sendAllSMS() {
 // Reference Request functions
 async function loadReferenceRequestStatus() {
     try {
-        const response = await fetch(`/api/candidates/${candidateId}/reference-request-status`);
+        const response = await fetch(`/api/candidates/${candidateId}/reference-request-status`, { credentials: 'same-origin' });
         if (!response.ok) {
             renderReferenceRequestStatus({ status: 'none' });
             return;
@@ -1006,7 +1011,8 @@ async function sendReferenceRequest() {
     
     try {
         const response = await fetch(`/api/candidates/${candidateId}/send-reference-request`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin'
         });
         const data = await response.json();
         if (data.error) throw new Error(data.error);
@@ -1029,7 +1035,8 @@ async function resendReferenceRequest() {
     
     try {
         const response = await fetch(`/api/candidates/${candidateId}/resend-reference-request`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin'
         });
         const data = await response.json();
         if (data.error) throw new Error(data.error);
@@ -1057,7 +1064,8 @@ async function toggleArchive() {
         const response = await fetch(`/api/candidates/${candidateId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: newStatus })
+            body: JSON.stringify({ status: newStatus }),
+            credentials: 'same-origin'
         });
         const data = await response.json();
         if (data.error) throw new Error(data.error);
@@ -1085,7 +1093,8 @@ async function deleteCandidate() {
     
     try {
         const response = await fetch(`/api/candidates/${candidateId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'same-origin'
         });
         const data = await response.json();
         if (data.error) throw new Error(data.error);
@@ -1109,7 +1118,7 @@ async function openSurveyPreview(refId) {
     content.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Generating questions...</div>';
     
     try {
-        const response = await fetch(`/api/candidates/${candidateId}/references/${refId}/survey/preview`);
+        const response = await fetch(`/api/candidates/${candidateId}/references/${refId}/survey/preview`, { credentials: 'same-origin' });
         const data = await response.json();
         if (data.error) throw new Error(data.error);
         
@@ -1170,7 +1179,8 @@ async function sendSurvey() {
         const response = await fetch(`/api/candidates/${candidateId}/references/${currentSurveyRefId}/survey/send`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ questions: editedQuestions })
+            body: JSON.stringify({ questions: editedQuestions }),
+            credentials: 'same-origin'
         });
         const data = await response.json();
         if (data.error) throw new Error(data.error);
@@ -1190,7 +1200,7 @@ async function viewSurveyResults(refId) {
     content.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="spinner" style="margin: 0 auto;"></div></div>';
     
     try {
-        const response = await fetch(`/api/candidates/${candidateId}/references/${refId}/survey/results`);
+        const response = await fetch(`/api/candidates/${candidateId}/references/${refId}/survey/results`, { credentials: 'same-origin' });
         const data = await response.json();
         if (data.error) throw new Error(data.error);
         
